@@ -1,0 +1,43 @@
+version: "2.22"
+services:
+  echoserver:
+    build: echoServer/
+    ports: 
+      - 8080:8080
+    networks:
+      - postgres
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: "echodb"
+      POSTGRES_USER: "echopguser"
+      POSTGRES_PASSWORD: "pgpw4echo"
+      PGDATA: "/var/lib/postgresql/data"
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - echodb-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    networks:
+      - postgres
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "echopguser@habr.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4echo"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports: 
+      - "5050:80"
+    restart: unless-stopped
+    networks:
+      - postgres
+networks:
+  postgres:
+    driver: bridge
+volumes:
+  echodb-data:
+  pgadmin-data:
