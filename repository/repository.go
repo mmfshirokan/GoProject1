@@ -2,55 +2,71 @@ package repository
 
 import (
 	"github.com/jackc/pgx"
+
+	"github.com/mmfshirokan/GoProject1/model"
+
+	"fmt"
 )
 
-var (
+type Repository struct {
 	conn       *pgx.Conn
-	ConnConfig pgx.ConnConfig = pgx.ConnConfig{
+	ConnConfig pgx.ConnConfig
+	err        error
+}
+
+func NewRepository() *Repository {
+	rep := Repository{
+		ConnConfig: pgx.ConnConfig{
+			Host:     "project1-postgres-1",
+			Port:     5432,
+			Database: "echodb",
+			User:     "echopguser",
+			Password: "pgpw4echo",
+		},
+	}
+	rep.conn, rep.err = pgx.Connect(rep.ConnConfig)
+
+	if rep.err != nil {
+		fmt.Println("Error connecting to db: ", rep.err)
+	}
+
+	return &Repository{}
+}
+
+/*unc (rep *Repository) SetConnection() error {
+	rep.ConnConfig =  pgx.ConnConfig{
 		Host:     "project1-postgres-1",
 		Port:     5432,
 		Database: "echodb",
 		User:     "echopguser",
 		Password: "pgpw4echo",
 	}
-)
+	rep.conn, rep.err = pgx.Connect(rep.ConnConfig)
+	return rep.err
+}*/
 
-func GetUserTroughID(id string) (string, string, error) {
-	var (
-		name string
-		male string
-	)
-	err := conn.QueryRow("SELECT name, male FROM entity WHERE id = "+id).Scan(&name, &male)
-	return name, male, err
+func (rep *Repository) GetUserTroughID(id string) (string, string, error) {
+	usr := model.User{}
+	rep.err = rep.conn.QueryRow("SELECT name, male FROM entity WHERE id = "+id).Scan(&usr.Name, &usr.Male)
+	return usr.Name, usr.Male, rep.err
 }
 
-func SaveUser(id string, name string, male string) error {
-	_, err := conn.Exec("INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
-	return err
+func (rep *Repository) SaveUser(id string, name string, male string) error {
+	_, rep.err = rep.conn.Exec("INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
+	return rep.err
 }
 
-func UpdateUser(id string, name string, male string) error {
-	_, err := conn.Exec("UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
-	return err
+func (rep *Repository) UpdateUser(id string, name string, male string) error {
+	_, rep.err = rep.conn.Exec("UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
+	return rep.err
 }
 
-func DeleteUser(id string) error {
-	_, err := conn.Exec("DELETE FROM entity WHERE id = $1", id)
-	return err
+func (rep *Repository) DeleteUser(id string) error {
+	_, rep.err = rep.conn.Exec("DELETE FROM entity WHERE id = $1", id)
+	return rep.err
 }
 
-func CreatEntity() error {
-	_, err := conn.Exec("CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name CHARACTER VARYING(30) NOT NULL, male BOOLEAN NOT NULL)")
-	return err
-}
-
-func OpenConnection() error {
-	var err error
-	conn, err = pgx.Connect(ConnConfig)
-	return err
-}
-
-func CloseConnection() error {
-	err := conn.Close()
-	return err
+func (rep *Repository) CreatEntity() error {
+	_, rep.err = rep.conn.Exec("CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name CHARACTER VARYING(30) NOT NULL, male BOOLEAN NOT NULL)")
+	return rep.err
 }

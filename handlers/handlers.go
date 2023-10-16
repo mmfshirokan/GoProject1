@@ -1,60 +1,67 @@
 package handlers
 
 import (
+	"fmt"
+
 	"net/http"
 
-	"repository"
+	"github.com/mmfshirokan/GoProject1/model"
+
+	"github.com/mmfshirokan/GoProject1/service"
 
 	"github.com/labstack/echo"
 )
 
-type User struct {
-	id   string
-	name string
-	male string
-}
-
 type Handler struct {
+	serv *service.Service
+	err  error
 }
 
-func NewUserHandler() *Handler {
-	return &Handler{}
-}
-
-func (h *Handler) GetUser(c echo.Context) error {
-	usr := User{
-		id:   c.Param("id"),
-		name: c.FormValue("name"),
-		male: c.FormValue("male"),
+func NewHandler() *Handler {
+	hand := Handler{
+		serv: service.NewService(),
 	}
-	usr.male, usr.male, _ = h.serv.GetUserTroughID(usr.id)
-	return c.String(http.StatusOK, "User id: "+usr.id+"\nUser name: "+usr.name+"\nUser male: "+usr.male+"\n")
+	return &hand
 }
 
-func SaveUser(c echo.Context) error {
-	usr := User{
-		id:   c.Param("id"),
-		name: c.FormValue("name"),
-		male: c.FormValue("male"),
+func (hand *Handler) GetUser(c echo.Context) error {
+	usr := model.User{
+		Id:   c.Param("id"),
+		Name: c.FormValue("name"),
+		Male: c.FormValue("male"),
 	}
-	err := repository.SaveUser(usr.id, usr.name, usr.male)
-	return err
+
+	usr.Name, usr.Male, hand.err = hand.serv.GetUserTroughID(usr.Id)
+	if hand.err != nil {
+		fmt.Println("Error ocured: ", hand.err)
+	}
+	return c.String(http.StatusOK, "Usser id: "+usr.Id+"\nUser name: "+usr.Name+"\nUser male:"+usr.Male+"\n")
 }
 
-func UpdateUser(c echo.Context) error {
-	usr := User{
-		id:   c.Param("id"),
-		name: c.FormValue("name"),
-		male: c.FormValue("male"),
+func (hand *Handler) SaveUser(c echo.Context) error {
+	usr := model.User{
+		Id:   c.Param("id"),
+		Name: c.FormValue("name"),
+		Male: c.FormValue("male"),
 	}
-	err := repository.UpdateUser(usr.id, usr.name, usr.male)
-	return err
+	hand.err = hand.serv.SaveUser(usr.Id, usr.Name, usr.Male)
+	return hand.err
 }
 
-func DeleteUser(c echo.Context) error {
-	usr := User{
-		id: c.Param("id"),
+func (hand *Handler) UpdateUser(c echo.Context) error {
+	usr := model.User{
+		Id:   c.Param("id"),
+		Name: c.FormValue("name"),
+		Male: c.FormValue("male"),
 	}
-	err := repository.DeleteUser(usr.id)
-	return err
+	hand.err = hand.serv.UpdateUser(usr.Id, usr.Name, usr.Male)
+	return hand.err
+}
+
+func (hand *Handler) DeleteUser(c echo.Context) error {
+	usr := model.User{
+		Id: c.Param("id"),
+	}
+	hand.err = hand.serv.DeleteUser(usr.Id)
+	return hand.err
 }

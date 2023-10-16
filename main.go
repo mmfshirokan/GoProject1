@@ -1,23 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"handlers"
-	"os"
-	"repository"
-	"service"
+	"github.com/labstack/echo"
+
+	"github.com/mmfshirokan/GoProject1/handlers"
 )
 
 func main() {
-	err := repository.OpenConnection()
-	defer repository.CloseConnection()
+	hand := handlers.NewHandler()
 
-	if err != nil {
-		fmt.Println("Error ocured while opening connection: ", err)
-		os.Exit(1)
-	}
-
-	h := handlers.NewUserHandler()
-
-	service.StartServer(h.GetUser, handlers.SaveUser, handlers.UpdateUser, handlers.DeleteUser)
+	e := echo.New()
+	e.GET("/users:id", hand.GetUser)
+	e.POST("/users:id", hand.SaveUser)
+	e.PUT("/users:id", hand.UpdateUser)
+	e.DELETE("/users:id", hand.DeleteUser)
+	e.Logger.Fatal(e.Start(":8080"))
 }
