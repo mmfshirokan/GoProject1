@@ -4,10 +4,16 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/mmfshirokan/GoProject1/handlers"
+	"github.com/mmfshirokan/GoProject1/repository"
+	"github.com/mmfshirokan/GoProject1/service"
 )
 
 func main() {
-	hand := handlers.NewHandler()
+	repo := repository.NewRepository()
+
+	serv := service.NewService(repo)
+
+	hand := handlers.NewHandler(serv)
 
 	e := echo.New()
 	e.GET("/users:id", hand.GetUser)

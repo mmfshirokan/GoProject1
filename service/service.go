@@ -4,13 +4,13 @@ import "github.com/mmfshirokan/GoProject1/repository"
 
 type Service struct {
 	rep *repository.Repository
+	err error
 }
 
-func NewService() *Service {
-	serv := Service{
-		rep: repository.NewRepository(),
+func NewService(repo *repository.Repository) *Service {
+	return &Service{
+		rep: repo,
 	}
-	return &serv
 }
 
 func (serv *Service) GetUserTroughID(id string) (string, string, error) {

@@ -17,11 +17,10 @@ type Handler struct {
 	err  error
 }
 
-func NewHandler() *Handler {
-	hand := Handler{
-		serv: service.NewService(),
+func NewHandler(ser *service.Service) *Handler {
+	return &Handler{
+		serv: ser,
 	}
-	return &hand
 }
 
 func (hand *Handler) GetUser(c echo.Context) error {
