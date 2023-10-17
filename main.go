@@ -14,13 +14,12 @@ import (
 func main() {
 	repo := repository.NewRepository()
 
-	serv := service.NewService(repo)
-
-	err := serv.CreatEntity()
-
+	err := repo.CreatEntity()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create table: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
+
+	serv := service.NewService(repo)
 
 	hand := handlers.NewHandler(serv)
 

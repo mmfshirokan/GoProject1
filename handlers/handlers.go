@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 
+	"os"
+
 	"net/http"
 
 	"github.com/mmfshirokan/GoProject1/model"
@@ -13,54 +15,56 @@ import (
 )
 
 type Handler struct {
-	serv *service.Service
+	user *service.User
 	err  error
 }
 
-func NewHandler(ser *service.Service) *Handler {
+func NewHandler(usr *service.User) *Handler {
 	return &Handler{
-		serv: ser,
+		user: usr,
 	}
 }
 
 func (hand *Handler) GetUser(c echo.Context) error {
-	usr := model.User{
-		Id:   c.Param("id"),
-		Name: c.FormValue("name"),
-		Male: c.FormValue("male"),
-	}
-
-	usr.Name, usr.Male, hand.err = hand.serv.GetUserTroughID(usr.Id)
+	var usr model.User
+	hand.err = c.Bind(&usr)
 	if hand.err != nil {
-		fmt.Println("Error ocured: ", hand.err)
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	usr.Name, usr.Male, hand.err = hand.user.GetTroughID(usr.Id)
+	if hand.err != nil {
+		fmt.Fprintf(os.Stderr, "Error ocured while operating with db: %v\n", hand.err)
+		return hand.err
 	}
 	return c.String(http.StatusOK, "Usser id: "+usr.Id+"\nUser name: "+usr.Name+"\nUser male:"+usr.Male+"\n")
 }
 
 func (hand *Handler) SaveUser(c echo.Context) error {
-	usr := model.User{
-		Id:   c.Param("id"),
-		Name: c.FormValue("name"),
-		Male: c.FormValue("male"),
+	var usr model.User
+	hand.err = c.Bind(&usr)
+	if hand.err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
 	}
-	hand.err = hand.serv.SaveUser(usr.Id, usr.Name, usr.Male)
+	hand.err = hand.user.Create(usr.Id, usr.Name, usr.Male)
 	return hand.err
 }
 
 func (hand *Handler) UpdateUser(c echo.Context) error {
-	usr := model.User{
-		Id:   c.Param("id"),
-		Name: c.FormValue("name"),
-		Male: c.FormValue("male"),
+	var usr model.User
+	hand.err = c.Bind(&usr)
+	if hand.err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
 	}
-	hand.err = hand.serv.UpdateUser(usr.Id, usr.Name, usr.Male)
+	hand.err = hand.user.Update(usr.Id, usr.Name, usr.Male)
 	return hand.err
 }
 
 func (hand *Handler) DeleteUser(c echo.Context) error {
-	usr := model.User{
-		Id: c.Param("id"),
+	var usr model.User
+	hand.err = c.Bind(&usr)
+	if hand.err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
 	}
-	hand.err = hand.serv.DeleteUser(usr.Id)
+	hand.err = hand.user.Delete(usr.Id)
 	return hand.err
 }
