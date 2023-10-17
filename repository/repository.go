@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"context"
+
+	"fmt"
 )
 
 type Repository struct {
@@ -16,7 +18,11 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv(os.Getenv("DATABASE_URL")))
+	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
+		os.Exit(1)
+	}
 	return &Repository{
 		conn: dbpool,
 		err:  err,
