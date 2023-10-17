@@ -28,3 +28,7 @@ func (serv *Service) UpdateUser(id string, name string, male string) error {
 func (serv *Service) DeleteUser(id string) error {
 	return serv.rep.DeleteUser(id)
 }
+
+func (serv *Service) CreatEntity() error {
+	return serv.CreatEntity()
+}

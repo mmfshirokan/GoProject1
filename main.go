@@ -3,6 +3,9 @@ package main
 import (
 	"github.com/labstack/echo"
 
+	"fmt"
+	"os"
+
 	"github.com/mmfshirokan/GoProject1/handlers"
 	"github.com/mmfshirokan/GoProject1/repository"
 	"github.com/mmfshirokan/GoProject1/service"
@@ -12,6 +15,12 @@ func main() {
 	repo := repository.NewRepository()
 
 	serv := service.NewService(repo)
+
+	err := serv.CreatEntity()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create table: %v\n", err)
+	}
 
 	hand := handlers.NewHandler(serv)
 
