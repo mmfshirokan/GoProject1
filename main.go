@@ -3,13 +3,18 @@ package main
 import (
 	"github.com/labstack/echo"
 
+	"github.com/mmfshirokan/GoProject1/config"
 	"github.com/mmfshirokan/GoProject1/handlers"
 	"github.com/mmfshirokan/GoProject1/repository"
 	"github.com/mmfshirokan/GoProject1/service"
 )
 
 func main() {
-	repo := repository.NewRepository()
+	conf := config.Config{
+		Database: "mongodb",
+	}
+
+	repo := repository.NewRepository(conf)
 	serv := service.NewUser(repo)
 	hand := handlers.NewHandler(serv)
 
