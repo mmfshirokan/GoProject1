@@ -7,6 +7,7 @@ services:
       - 8080:8080
     networks:
       - mongonet
+      - postgres
   mongo:
     container_name: "mongo_container"
     image: mongo:latest
@@ -14,29 +15,62 @@ services:
      MONGO_INITDB_ROOT_USERNAME: "root"
      MONGO_INITDB_ROOT_PASSWORD: "rootpassword"
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data:/var/lib/mongodb/data
+    ports:
+      - 6543:6543
+    restart: unless-stopped
+    networks:
+      - mongonet
+  mongoexpress:
+    container_name: mongo_express
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: "root"
+      ME_CONFIG_BASICAUTH_PASSWORD: "rootpasswoed"
+      ME_CONFIG_MONGODB_PORT: "6543"
+    volumes:
+      - mongo_express:/var/lib/mongoexpress
+    ports: 
+      - "6060:6060"
+    restart: unless-stopped
+    networks:
+      - mongonet
+  postgres:
+    container_name: "postgres_container"
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: "echodb"
+      POSTGRES_USER: "echopguser"
+      POSTGRES_PASSWORD: "pgpw4echo"
+      PGDATA: "/var/lib/postgresql/data"
+    volumes:
+      - echodb_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     restart: unless-stopped
     networks:
-      - mongonet
+      - postgres
   pgadmin:
-    container_name: mongo_express
-    image: mongo-express:latest
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:latest
     environment:
-      ME_CONFIG_BASICAUTH_USERNAME: "mongouser"
-      ME_CONFIG_BASICAUTH_PASSWORD: "password4mongodb"
-      ME_CONFIG_MONGODB_PORT: "5432"
+      PGADMIN_DEFAULT_EMAIL: "echopguser@habr.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4echo"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
-      - mongo_express:/data/express
+      - pgadmin_data:/var/lib/pgadmin
     ports: 
       - "5050:80"
     restart: unless-stopped
     networks:
-      - mongonet
+      - postgres
 networks:
+  postgres:
+    driver: bridge
   mongonet:
     driver: bridge
 volumes:
+  echodb_data:
+  pgadmin_data:
   mongodb_data:
   mongo_express:

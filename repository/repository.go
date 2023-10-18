@@ -33,7 +33,7 @@ type RepositoryPostgres struct {
 
 func NewRepository(conf config.Config) RepositoryInterface {
 	if conf.Database == "mongodb" {
-		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:5432"))
+		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:6543"))
 		defer client.Disconnect(context.Background())
 
 		if err != nil {
