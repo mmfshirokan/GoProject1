@@ -1,68 +1,71 @@
 package repository
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/mmfshirokan/GoProject1/model"
-
-	"os"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"context"
-
 	"fmt"
+	"os"
 )
 
+type RepositoryInterface interface {
+	GetTroughID(int) (string, bool, error)
+	Update(int, string, bool) error
+	Create(int, string, bool) error
+	Delete(int) error
+}
+
 type Repository struct {
-	conn *pgxpool.Pool
-	err  error
+	client     *mongo.Client
+	collection *mongo.Collection
+	err        error
 }
 
 func NewRepository() *Repository {
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:5432"))
+	defer client.Disconnect(context.Background())
+
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
 		os.Exit(1)
 	}
+
+	collection := client.Database("echodb").Collection("users")
+
 	return &Repository{
-		conn: dbpool,
-		err:  err,
+		client:     client,
+		collection: collection,
+		err:        err,
 	}
 }
 
-/*unc (rep *Repository) SetConnection() error {
-	rep.ConnConfig =  pgx.ConnConfig{
-		Host:     "project1-postgres-1",
-		Port:     5432,
-		Database: "echodb",
-		User:     "echopguser",
-		Password: "pgpw4echo",
-	}
-	rep.conn, rep.err = pgx.Connect(rep.ConnConfig)
-	return rep.err
-}*/
-
-func (rep *Repository) GetUserTroughID(id string) (string, string, error) {
-	usr := model.User{}
-	rep.err = rep.conn.QueryRow(context.Background(), "SELECT name, male FROM entity WHERE id = "+id).Scan(&usr.Name, &usr.Male)
+func (rep *Repository) GetTroughID(id int) (string, bool, error) {
+	var usr model.User
+	rep.err = rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 	return usr.Name, usr.Male, rep.err
 }
 
-func (rep *Repository) SaveUser(id string, name string, male string) error {
-	_, rep.err = rep.conn.Exec(context.Background(), "INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
+func (rep *Repository) Create(id int, name string, male bool) error {
+	_, rep.err = rep.collection.InsertOne(context.Background(), bson.D{
+		{Key: "_id", Value: id},
+		{Key: "name", Value: name},
+		{Key: "male", Value: male},
+	})
 	return rep.err
 }
 
-func (rep *Repository) UpdateUser(id string, name string, male string) error {
-	_, rep.err = rep.conn.Exec(context.Background(), "UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
+func (rep *Repository) Update(id int, name string, male bool) error {
+	_, rep.err = rep.collection.ReplaceOne(context.Background(), bson.D{{Key: "_id", Value: id}}, bson.D{
+		{Key: "name", Value: name},
+		{Key: "male", Value: male},
+	})
 	return rep.err
 }
 
-func (rep *Repository) DeleteUser(id string) error {
-	_, rep.err = rep.conn.Exec(context.Background(), "DELETE FROM entity WHERE id = $1", id)
-	return rep.err
-}
-
-func (rep *Repository) CreatEntity() error {
-	_, rep.err = rep.conn.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name CHARACTER VARYING(30) NOT NULL, male BOOLEAN NOT NULL)")
+func (rep *Repository) Delete(id int) error {
+	_, rep.err = rep.collection.DeleteOne(context.Background(), bson.D{{Key: "_id", Value: id}})
 	return rep.err
 }

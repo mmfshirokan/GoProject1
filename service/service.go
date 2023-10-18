@@ -3,27 +3,27 @@ package service
 import "github.com/mmfshirokan/GoProject1/repository"
 
 type User struct {
-	rep *repository.Repository
+	rep repository.RepositoryInterface
 }
 
-func NewService(repo *repository.Repository) *User {
+func NewUser(repo repository.RepositoryInterface) *User {
 	return &User{
 		rep: repo,
 	}
 }
 
-func (serv *User) GetTroughID(id string) (string, string, error) {
-	return serv.rep.GetUserTroughID(id)
+func (serv *User) GetTroughID(id int) (string, bool, error) {
+	return serv.rep.GetTroughID(id)
 }
 
-func (serv *User) Create(id string, name string, male string) error {
-	return serv.rep.SaveUser(id, name, male)
+func (serv *User) Create(id int, name string, male bool) error {
+	return serv.rep.Create(id, name, male)
 }
 
-func (serv *User) Update(id string, name string, male string) error {
-	return serv.rep.UpdateUser(id, name, male)
+func (serv *User) Update(id int, name string, male bool) error {
+	return serv.rep.Update(id, name, male)
 }
 
-func (serv *User) Delete(id string) error {
-	return serv.rep.DeleteUser(id)
+func (serv *User) Delete(id int) error {
+	return serv.rep.Delete(id)
 }

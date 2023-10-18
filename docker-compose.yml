@@ -6,40 +6,37 @@ services:
     ports: 
       - 8080:8080
     networks:
-      - postgres
-  postgres:
-    container_name: "postgres_container"
-    image: postgres:latest
+      - mongonet
+  mongo:
+    container_name: "mongo_container"
+    image: mongo:latest
     environment:
-      POSTGRES_DB: "echodb"
-      POSTGRES_USER: "echopguser"
-      POSTGRES_PASSWORD: "pgpw4echo"
-      PGDATA: "/var/lib/postgresql/data"
+     MONGO_INITDB_ROOT_USERNAME: "root"
+     MONGO_INITDB_ROOT_PASSWORD: "rootpassword"
     volumes:
-      - ./Pgdatabase Init Database:/docker-entrypoint-initdb.d
-      - echodb-data:/var/lib/postgresql/data
+      - mongodb_data:/data/db
     ports:
       - 5432:5432
     restart: unless-stopped
     networks:
-      - postgres
+      - mongonet
   pgadmin:
-    container_name: pgadmin_container
-    image: dpage/pgadmin4:latest
+    container_name: mongo_express
+    image: mongo-express:latest
     environment:
-      PGADMIN_DEFAULT_EMAIL: "echopguser@habr.com"
-      PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4echo"
-      PGADMIN_CONFIG_SERVER_MODE: "False"
+      ME_CONFIG_BASICAUTH_USERNAME: "mongouser"
+      ME_CONFIG_BASICAUTH_PASSWORD: "password4mongodb"
+      ME_CONFIG_MONGODB_PORT: "5432"
     volumes:
-      - pgadmin-data:/var/lib/pgadmin
+      - mongo_express:/data/express
     ports: 
       - "5050:80"
     restart: unless-stopped
     networks:
-      - postgres
+      - mongonet
 networks:
-  postgres:
+  mongonet:
     driver: bridge
 volumes:
-  echodb-data:
-  pgadmin-data:
+  mongodb_data:
+  mongo_express:

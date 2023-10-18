@@ -1,7 +1,7 @@
 package model
 
 type User struct {
-	Id   string `param:"id"`
+	Id   int    `param:"id"`
 	Name string `query:"name"`
-	Male string `query:"male"`
+	Male bool   `query:"male"`
 }

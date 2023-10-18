@@ -1,17 +1,14 @@
 package handlers
 
 import (
-	"fmt"
-
-	"os"
-
-	"net/http"
-
+	"github.com/labstack/echo"
 	"github.com/mmfshirokan/GoProject1/model"
-
 	"github.com/mmfshirokan/GoProject1/service"
 
-	"github.com/labstack/echo"
+	"fmt"
+	"net/http"
+	"os"
+	"strconv"
 )
 
 type Handler struct {
@@ -36,7 +33,7 @@ func (hand *Handler) GetUser(c echo.Context) error {
 		fmt.Fprintf(os.Stderr, "Error ocured while operating with db: %v\n", hand.err)
 		return hand.err
 	}
-	return c.String(http.StatusOK, "Usser id: "+usr.Id+"\nUser name: "+usr.Name+"\nUser male:"+usr.Male+"\n")
+	return c.String(http.StatusOK, "Usser id: "+strconv.FormatInt(int64(usr.Id), 10)+"\nUser name: "+usr.Name+"\nUser male:"+strconv.FormatBool(usr.Male)+"\n")
 }
 
 func (hand *Handler) SaveUser(c echo.Context) error {
