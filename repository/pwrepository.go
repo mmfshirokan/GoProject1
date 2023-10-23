@@ -31,7 +31,6 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		return &repositoryMongo{
 			client:     client,
 			collection: collection,
-			err:        err,
 		}
 	}
 
@@ -48,37 +47,36 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 
 	return &repositoryPostgres{
 		dbpool: dbpool,
-		err:    err,
 	}
 }
 
 func (rep *repositoryMongo) Store(id uint, pw string) error {
-	_, rep.err = rep.collection.InsertOne(context.Background(), bson.D{
+	_, err := rep.collection.InsertOne(context.Background(), bson.D{
 		{Key: "_id", Value: id},
 		{Key: "password", Value: pw},
 	})
-	return rep.err
+	return err
 }
 
 func (rep *repositoryMongo) Compare(id uint, pw string) (bool, error) {
 	var dbpw string
-	rep.err = rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
+	err := rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
 	if dbpw == pw {
-		return true, rep.err
+		return true, err
 	}
-	return false, rep.err
+	return false, err
 }
 
 func (rep *repositoryPostgres) Store(id uint, pw string) error {
-	_, rep.err = rep.dbpool.Exec(context.Background(), "INSERT INTO passwords VALUES ($1, $2)", id, pw)
-	return rep.err
+	_, err := rep.dbpool.Exec(context.Background(), "INSERT INTO passwords VALUES ($1, $2)", id, pw)
+	return err
 }
 
 func (rep *repositoryPostgres) Compare(id uint, pw string) (bool, error) {
 	var dbpw string
-	rep.err = rep.dbpool.QueryRow(context.Background(), "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
+	err := rep.dbpool.QueryRow(context.Background(), "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
 	if dbpw == pw {
-		return true, rep.err
+		return true, err
 	}
-	return false, rep.err
+	return false, err
 }
