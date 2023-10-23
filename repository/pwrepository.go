@@ -1,4 +1,4 @@
-package passwordRepository
+package repository
 
 import (
 	"context"
@@ -12,23 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type RepositoryInterface interface {
+type PwRepositoryInterface interface {
 	Store(uint, string) error
 	Compare(uint, string) (bool, error)
 }
 
-type repositoryMongo struct {
-	client     *mongo.Client
-	collection *mongo.Collection
-	err        error
-}
-
-type repositoryPostgres struct {
-	dbpool *pgxpool.Pool
-	err    error
-}
-
-func NewPasswordRepository(conf config.Config) RepositoryInterface {
+func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	if conf.Database == "mongodb" {
 		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:6543"))
 		defer client.Disconnect(context.Background())

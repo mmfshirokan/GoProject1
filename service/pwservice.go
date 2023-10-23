@@ -1,14 +1,14 @@
-package passwordService
+package service
 
 import (
-	"github.com/mmfshirokan/GoProject1/passwordRepository"
+	"github.com/mmfshirokan/GoProject1/repository"
 )
 
 type Password struct {
-	rep passwordRepository.RepositoryInterface
+	rep repository.PwRepositoryInterface
 }
 
-func NewPassword(repo passwordRepository.RepositoryInterface) *Password {
+func NewPassword(repo repository.PwRepositoryInterface) *Password {
 	return &Password{
 		rep: repo,
 	}
