@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/labstack/echo"
 	"github.com/mmfshirokan/GoProject1/model"
+	"github.com/mmfshirokan/GoProject1/passwordService"
 	"github.com/mmfshirokan/GoProject1/service"
 
 	"fmt"
@@ -12,13 +13,15 @@ import (
 )
 
 type Handler struct {
-	user *service.User
-	err  error
+	password *passwordService.Password
+	user     *service.User
+	err      error
 }
 
-func NewHandler(usr *service.User) *Handler {
+func NewHandler(usr *service.User, usrpw *passwordService.Password) *Handler {
 	return &Handler{
-		user: usr,
+		user:     usr,
+		password: usrpw,
 	}
 }
 
@@ -36,7 +39,7 @@ func (hand *Handler) GetUser(c echo.Context) error {
 	return c.String(http.StatusOK, "Usser id: "+strconv.FormatInt(int64(usr.Id), 10)+"\nUser name: "+usr.Name+"\nUser male:"+strconv.FormatBool(usr.Male)+"\n")
 }
 
-func (hand *Handler) SaveUser(c echo.Context) error {
+func (hand *Handler) createUser(c echo.Context) error {
 	var usr model.User
 	hand.err = c.Bind(&usr)
 	if hand.err != nil {
@@ -64,4 +67,33 @@ func (hand *Handler) DeleteUser(c echo.Context) error {
 	}
 	hand.err = hand.user.Delete(usr.Id)
 	return hand.err
+}
+
+func (hand *Handler) Register(c echo.Context) error {
+	var usr model.User
+	hand.err = c.Bind(&usr)
+	if hand.err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	password := c.FormValue("password")
+
+	hand.err = hand.createUser(c)
+	if hand.err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	hand.err = hand.password.Store(usr.Id, password)
+	return hand.err
+}
+
+func (hand *Handler) Login(password string, login string, c echo.Context) (bool, error) {
+	var usr model.User
+	hand.err = c.Bind(&usr)
+	if hand.err != nil {
+		return false, c.String(http.StatusBadRequest, "bad request")
+	}
+	password = c.FormValue("password")
+	var correct bool
+
+	correct, hand.err = hand.password.Compare(usr.Id, password)
+	return correct, hand.err
 }

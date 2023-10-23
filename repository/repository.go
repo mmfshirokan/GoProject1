@@ -14,19 +14,19 @@ import (
 )
 
 type RepositoryInterface interface {
-	GetTroughID(int) (string, bool, error)
-	Update(int, string, bool) error
-	Create(int, string, bool) error
-	Delete(int) error
+	GetTroughID(uint) (string, bool, error)
+	Update(uint, string, bool) error
+	Create(uint, string, bool) error
+	Delete(uint) error
 }
 
-type RepositoryMongo struct {
+type repositoryMongo struct {
 	client     *mongo.Client
 	collection *mongo.Collection
 	err        error
 }
 
-type RepositoryPostgres struct {
+type repositoryPostgres struct {
 	dbpool *pgxpool.Pool
 	err    error
 }
@@ -42,7 +42,7 @@ func NewRepository(conf config.Config) RepositoryInterface {
 
 		collection := client.Database("users").Collection("entity")
 
-		return &RepositoryMongo{
+		return &repositoryMongo{
 			client:     client,
 			collection: collection,
 			err:        err,
@@ -60,19 +60,19 @@ func NewRepository(conf config.Config) RepositoryInterface {
 		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
 	}
 
-	return &RepositoryPostgres{
+	return &repositoryPostgres{
 		dbpool: dbpool,
 		err:    err,
 	}
 }
 
-func (rep *RepositoryMongo) GetTroughID(id int) (string, bool, error) {
+func (rep *repositoryMongo) GetTroughID(id uint) (string, bool, error) {
 	var usr model.User
 	rep.err = rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 	return usr.Name, usr.Male, rep.err
 }
 
-func (rep *RepositoryMongo) Create(id int, name string, male bool) error {
+func (rep *repositoryMongo) Create(id uint, name string, male bool) error {
 	_, rep.err = rep.collection.InsertOne(context.Background(), bson.D{
 		{Key: "_id", Value: id},
 		{Key: "name", Value: name},
@@ -81,7 +81,7 @@ func (rep *RepositoryMongo) Create(id int, name string, male bool) error {
 	return rep.err
 }
 
-func (rep *RepositoryMongo) Update(id int, name string, male bool) error {
+func (rep *repositoryMongo) Update(id uint, name string, male bool) error {
 	_, rep.err = rep.collection.ReplaceOne(context.Background(), bson.D{{Key: "_id", Value: id}}, bson.D{
 		{Key: "name", Value: name},
 		{Key: "male", Value: male},
@@ -89,28 +89,28 @@ func (rep *RepositoryMongo) Update(id int, name string, male bool) error {
 	return rep.err
 }
 
-func (rep *RepositoryMongo) Delete(id int) error {
+func (rep *repositoryMongo) Delete(id uint) error {
 	_, rep.err = rep.collection.DeleteOne(context.Background(), bson.D{{Key: "_id", Value: id}})
 	return rep.err
 }
 
-func (rep *RepositoryPostgres) GetTroughID(id int) (string, bool, error) {
+func (rep *repositoryPostgres) GetTroughID(id uint) (string, bool, error) {
 	usr := model.User{}
 	rep.err = rep.dbpool.QueryRow(context.Background(), "SELECT name, male FROM entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 	return usr.Name, usr.Male, rep.err
 }
 
-func (rep *RepositoryPostgres) Create(id int, name string, male bool) error {
+func (rep *repositoryPostgres) Create(id uint, name string, male bool) error {
 	_, rep.err = rep.dbpool.Exec(context.Background(), "INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
 	return rep.err
 }
 
-func (rep *RepositoryPostgres) Update(id int, name string, male bool) error {
+func (rep *repositoryPostgres) Update(id uint, name string, male bool) error {
 	_, rep.err = rep.dbpool.Exec(context.Background(), "UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
 	return rep.err
 }
 
-func (rep *RepositoryPostgres) Delete(id int) error {
+func (rep *repositoryPostgres) Delete(id uint) error {
 	_, rep.err = rep.dbpool.Exec(context.Background(), "DELETE FROM entity WHERE id = $1", id)
 	return rep.err
 }

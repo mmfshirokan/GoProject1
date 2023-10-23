@@ -12,18 +12,18 @@ func NewUser(repo repository.RepositoryInterface) *User {
 	}
 }
 
-func (serv *User) GetTroughID(id int) (string, bool, error) {
+func (serv *User) GetTroughID(id uint) (string, bool, error) {
 	return serv.rep.GetTroughID(id)
 }
 
-func (serv *User) Create(id int, name string, male bool) error {
+func (serv *User) Create(id uint, name string, male bool) error {
 	return serv.rep.Create(id, name, male)
 }
 
-func (serv *User) Update(id int, name string, male bool) error {
+func (serv *User) Update(id uint, name string, male bool) error {
 	return serv.rep.Update(id, name, male)
 }
 
-func (serv *User) Delete(id int) error {
+func (serv *User) Delete(id uint) error {
 	return serv.rep.Delete(id)
 }
