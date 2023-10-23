@@ -26,10 +26,9 @@ func main() {
 	hand := handlers.NewHandler(serv, pw)
 
 	e := echo.New()
-	e.Use(middleware.BasicAuth(hand.Login))
-
-	e.GET("/users:id", hand.GetUser)
 	e.POST("/users:id", hand.Register) // create changed to Register
+	e.Use(middleware.BasicAuth(hand.Login))
+	e.GET("/users:id", hand.GetUser)
 	e.PUT("/users:id", hand.UpdateUser)
 	e.DELETE("/users:id", hand.DeleteUser)
 	e.Logger.Fatal(e.Start(":8080"))
