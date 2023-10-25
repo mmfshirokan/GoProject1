@@ -4,20 +4,18 @@ go 1.21.1
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo-jwt/v4 v4.2.0
+	github.com/labstack/echo/v4 v4.10.2
 	go.mongodb.org/mongo-driver v1.12.1
 )
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

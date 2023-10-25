@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/mmfshirokan/GoProject1/handlers/request"
 	"github.com/mmfshirokan/GoProject1/model"
-	"github.com/mmfshirokan/GoProject1/request"
 	"github.com/mmfshirokan/GoProject1/service"
 
 	"net/http"
@@ -25,13 +25,13 @@ func NewHandler(usr *service.User, usrpw *service.Password) *Handler {
 }
 
 func (hand *Handler) GetUser(c echo.Context) error {
-	token := c.Get("token").(*jwt.Token)
+	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
 	return c.String(http.StatusOK, "Usser id: "+strconv.FormatInt(int64(claims.Id), 10)+"\nUser name: "+claims.Name+"\nUser male:"+strconv.FormatBool(claims.Male)+"\n")
 }
 
 func (hand *Handler) UpdateUser(c echo.Context) error {
-	token := c.Get("token").(*jwt.Token)
+	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
 	var user model.User
 	c.Bind(&user)
@@ -40,7 +40,7 @@ func (hand *Handler) UpdateUser(c echo.Context) error {
 }
 
 func (hand *Handler) DeleteUser(c echo.Context) error {
-	token := c.Get("token").(*jwt.Token)
+	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
 	err := hand.user.Delete(claims.Id)
 	return err
@@ -95,26 +95,3 @@ func (hand *Handler) Login(c echo.Context) error {
 		"token": t,
 	})
 }
-
-//middleware func Not handler
-/*func (hand *Handler) Login(password string, login string, c echo.Context) (bool, error) {
-	var usr model.User
-	err := c.Bind(&usr)
-	if err != nil {
-		return false, c.String(http.StatusBadRequest, "bad request")
-	}
-	var correct bool
-
-	correct, err = hand.password.Compare(usr.Id, usr.Password)
-	return correct, err
-}*/
-
-/*func (hand *Handler) createUser(c echo.Context) error {
-	var usr model.User
-	hand.err = c.Bind(&usr)
-	if hand.err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
-	}
-	hand.err = hand.user.Create(usr.Id, usr.Name, usr.Male)
-	return hand.err
-}*/

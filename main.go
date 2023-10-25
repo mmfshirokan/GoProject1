@@ -7,14 +7,14 @@ import (
 
 	"github.com/mmfshirokan/GoProject1/config"
 	"github.com/mmfshirokan/GoProject1/handlers"
+	"github.com/mmfshirokan/GoProject1/handlers/request"
 	"github.com/mmfshirokan/GoProject1/repository"
-	"github.com/mmfshirokan/GoProject1/request"
 	"github.com/mmfshirokan/GoProject1/service"
 )
 
 func main() {
 	conf := config.Config{
-		Database: "mongodb",
+		Database: "postgres",
 	}
 
 	repo := repository.NewRepository(conf)
@@ -27,7 +27,7 @@ func main() {
 
 	e := echo.New()
 	e.POST("/users/signin", hand.Register) // create changed to Register
-	e.POST("/users/login:id", hand.Login)
+	e.PUT("/users/login:id", hand.Login)
 	g := e.Group("/users")
 
 	config := echojwt.Config{

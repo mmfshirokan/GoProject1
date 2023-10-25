@@ -46,7 +46,7 @@ func NewRepository(conf config.Config) RepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), " postgres://echopguser:pgadminpwd4echo@localhost:8080/echodb?sslmode=disable")
+	dbpool, err := pgxpool.New(context.Background(), "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable") //postgres://echopguser:pgadminpwd4echo@localhost:5432/echodb?sslmode=disable// os.Getenv("DATABASE_URL")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
