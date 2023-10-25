@@ -34,7 +34,7 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), " postgres://echopguser:pgadminpwd4echo@localhost:8080/echopwdb?sslmode=disable")
+	dbpool, err := pgxpool.New(context.Background(), " postgres://echopguser:pgpw4echo@localhost:8080/echopwdb?sslmode=disable")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
