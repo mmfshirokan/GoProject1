@@ -28,7 +28,7 @@ func main() {
 	e := echo.New()
 	e.POST("/users/signin", hand.Register) // create changed to Register
 	e.PUT("/users/login:id", hand.Login)
-	g := e.Group("/users")
+	g := e.Group("/users/auth")
 
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
@@ -37,10 +37,9 @@ func main() {
 		SigningKey: []byte("secret"),
 	}
 
-	//g.Use(middleware.BasicAuth(hand.Login))
 	g.Use(echojwt.WithConfig(config))
-	g.GET("/auth/get", hand.GetUser)
-	g.PUT("/auth/update", hand.UpdateUser)
-	g.DELETE("/auth/delete", hand.DeleteUser)
-	e.Logger.Fatal(e.Start(":8080"))
+	g.GET("/get", hand.GetUser)
+	g.PUT("/update", hand.UpdateUser)
+	g.DELETE("/delete", hand.DeleteUser)
+	e.Logger.Fatal(e.Start(":8081"))
 }

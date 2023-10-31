@@ -32,7 +32,7 @@ type repositoryPostgres struct {
 func NewRepository(conf config.Config) RepositoryInterface {
 	if conf.Database == "mongodb" {
 		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:6543"))
-		defer client.Disconnect(context.Background())
+		//defer client.Disconnect(context.Background())
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
@@ -50,7 +50,7 @@ func NewRepository(conf config.Config) RepositoryInterface {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
-	defer dbpool.Close()
+	//defer dbpool.Close()
 
 	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name CHARACTER VARYING(30) NOT NULL, male BOOLEAN NOT NULL)")
 	if err != nil {

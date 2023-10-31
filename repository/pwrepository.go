@@ -20,7 +20,7 @@ type PwRepositoryInterface interface {
 func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	if conf.Database == "mongodb" {
 		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:6543"))
-		defer client.Disconnect(context.Background())
+		//defer client.Disconnect(context.Background())
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
@@ -34,11 +34,11 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), " postgres://echopguser:pgpw4echo@localhost:8080/echopwdb?sslmode=disable")
+	dbpool, err := pgxpool.New(context.Background(), "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
-	defer dbpool.Close()
+	//defer dbpool.Close()
 
 	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS passwords (id INT PRIMARY KEY, password CHARACTER VARYING(30) NOT NULL)")
 	if err != nil {

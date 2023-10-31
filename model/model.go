@@ -1,8 +1,8 @@
 package model
 
 type User struct {
-	Id       uint   `param:"id" query:"id"`
-	Name     string `query:"name"`
-	Male     bool   `query:"male"`
-	Password string `query:"password"`
+	Id       uint   `json:"id" param:"id" query:"id"`
+	Name     string `json:"name" query:"name"`
+	Male     bool   `json:"male" query:"male"`
+	Password string `json:"password" query:"password"`
 }

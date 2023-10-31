@@ -4,7 +4,7 @@ services:
     container_name: "server_container"
     build: /
     ports: 
-      - 8080:8080
+      - 8081:8081
     networks:
       - mongonet
       - postgres
