@@ -1,13 +1,10 @@
 package handlers
 
 import (
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/mmfshirokan/GoProject1/handlers/request"
 	"github.com/mmfshirokan/GoProject1/model"
 
 	"net/http"
-	"time"
 )
 
 func (hand *Handler) Register(c echo.Context) error {
@@ -39,21 +36,14 @@ func (hand *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	var t string
 
-	claims := &request.UserRequest{
-		Id:   usr.Id,
-		Name: usr.Name,
-		Male: usr.Male,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte("secret"))
+	t, err = hand.token.GenerateAuthToken(usr.Id, usr.Name, usr.Male)
 	if err != nil {
 		return err
 	}
+
+	c.SetCookie(hand.token.GenerateRefreshToken(usr.Id))
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"token": t,

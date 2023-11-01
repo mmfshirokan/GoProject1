@@ -27,7 +27,7 @@ func main() {
 
 	e := echo.New()
 	e.POST("/users/signin", hand.Register) // create changed to Register
-	e.PUT("/users/login:id", hand.Login)
+	e.PUT("/users/login", hand.Login)
 	g := e.Group("/users/auth")
 
 	config := echojwt.Config{

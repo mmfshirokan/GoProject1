@@ -13,6 +13,7 @@ import (
 type Handler struct {
 	password *service.Password
 	user     *service.User
+	token    *service.Token
 }
 
 func NewHandler(usr *service.User, usrpw *service.Password) *Handler {
@@ -38,6 +39,9 @@ func (hand *Handler) UpdateUser(c echo.Context) error {
 func (hand *Handler) DeleteUser(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
-	err := hand.user.Delete(claims.Id)
+	if err := hand.user.Delete(claims.Id); err != nil {
+		return err
+	}
+	err := hand.password.DeletePassword(claims.Id)
 	return err
 }

@@ -21,3 +21,7 @@ func (usr *Password) Store(id uint, pw string) error {
 func (usr *Password) Compare(id uint, pw string) (bool, error) {
 	return usr.rep.Compare(id, pw)
 }
+
+func (usr *Password) DeletePassword(id uint) error {
+	return usr.rep.DeletePassword(id)
+}
