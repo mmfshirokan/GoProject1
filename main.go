@@ -18,16 +18,18 @@ func main() {
 	}
 
 	repo := repository.NewRepository(conf)
-	serv := service.NewUser(repo)
+	pw_repo := repository.NewPasswordRepository(conf)
+	auth_repo := repository.NewAuthRpository()
 
-	pwrepo := repository.NewPasswordRepository(conf)
-	pw := service.NewPassword(pwrepo)
+	usr := service.NewUser(repo)
+	pw := service.NewPassword(pw_repo)
+	tok := service.NewToken(auth_repo)
 
-	hand := handlers.NewHandler(serv, pw)
+	hand := handlers.NewHandler(usr, pw, tok)
 
 	e := echo.New()
-	e.POST("/users/signin", hand.Register) // create changed to Register
-	e.PUT("/users/login", hand.Login)
+	e.POST("/users/signup", hand.SignUp) // create changed to Register
+	e.PUT("/users/signin", hand.SignIn)
 	g := e.Group("/users/auth")
 
 	config := echojwt.Config{

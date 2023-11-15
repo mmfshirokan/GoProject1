@@ -7,6 +7,7 @@ require (
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.10.2
 	go.mongodb.org/mongo-driver v1.12.1
+
 )
 
 require (
@@ -26,6 +27,8 @@ require (
 )
 
 require (
+	github.com/beevik/guid v1.0.0
+	github.com/google/uuid v1.4.0
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
