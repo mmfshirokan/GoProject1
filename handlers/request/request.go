@@ -5,7 +5,7 @@ import (
 )
 
 type UserRequest struct {
-	Id   uint   `json:"id"`
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Male bool   `json:"male"`
 	jwt.RegisteredClaims

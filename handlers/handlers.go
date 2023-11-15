@@ -32,18 +32,20 @@ func (hand *Handler) GetUser(c echo.Context) error {
 }
 
 func (hand *Handler) UpdateUser(c echo.Context) error {
+	ctx := c.Request().Context()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
-	err := hand.user.Update(claims.Id, claims.Name, claims.Male)
+	err := hand.user.Update(ctx, claims.Id, claims.Name, claims.Male)
 	return err
 }
 
 func (hand *Handler) DeleteUser(c echo.Context) error {
+	ctx := c.Request().Context()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*request.UserRequest)
-	if err := hand.user.Delete(claims.Id); err != nil {
+	if err := hand.user.Delete(ctx, claims.Id); err != nil {
 		return err
 	}
-	err := hand.password.DeletePassword(claims.Id)
+	err := hand.password.DeletePassword(ctx, claims.Id)
 	return err
 }

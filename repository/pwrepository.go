@@ -13,14 +13,15 @@ import (
 )
 
 type PwRepositoryInterface interface {
-	Store(uint, string) error
-	Compare(uint, string) (bool, error)
-	DeletePassword(uint) error
+	Store(context.Context, int, string) error
+	Compare(context.Context, int, string) (bool, error)
+	DeletePassword(context.Context, int) error
 }
 
 func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
+	ctx := context.Background() //should it also be some special context?
 	if conf.Database == "mongodb" {
-		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:6543"))
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:6543"))
 		//defer client.Disconnect(context.Background())
 
 		if err != nil {
@@ -35,13 +36,12 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable")
+	dbpool, err := pgxpool.New(ctx, "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
-	//defer dbpool.Close()
 
-	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS passwords (id INT PRIMARY KEY, password CHARACTER VARYING(30) NOT NULL)")
+	_, err = dbpool.Exec(ctx, "CREATE TABLE IF NOT EXISTS passwords (id INT PRIMARY KEY, password TEXT NOT NULL)")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
 	}
@@ -51,43 +51,43 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	}
 }
 
-func (rep *repositoryMongo) Store(id uint, pw string) error {
-	_, err := rep.collection.InsertOne(context.Background(), bson.D{
+func (rep *repositoryMongo) Store(ctx context.Context, id int, pw string) error {
+	_, err := rep.collection.InsertOne(ctx, bson.D{
 		{Key: "_id", Value: id},
 		{Key: "password", Value: pw},
 	})
 	return err
 }
 
-func (rep *repositoryMongo) Compare(id uint, pw string) (bool, error) {
+func (rep *repositoryMongo) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	var dbpw string
-	err := rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
+	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
 	if dbpw == pw {
 		return true, err
 	}
 	return false, err
 }
 
-func (rep *repositoryMongo) DeletePassword(id uint) error {
-	_, err := rep.collection.DeleteOne(context.Background(), bson.D{{Key: "_id", Value: id}})
+func (rep *repositoryMongo) DeletePassword(ctx context.Context, id int) error {
+	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
 	return err
 }
 
-func (rep *repositoryPostgres) Store(id uint, pw string) error {
-	_, err := rep.dbpool.Exec(context.Background(), "INSERT INTO passwords VALUES ($1, $2)", id, pw)
+func (rep *repositoryPostgres) Store(ctx context.Context, id int, pw string) error {
+	_, err := rep.dbpool.Exec(ctx, "INSERT INTO passwords VALUES ($1, $2)", id, pw)
 	return err
 }
 
-func (rep *repositoryPostgres) Compare(id uint, pw string) (bool, error) {
+func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	var dbpw string
-	err := rep.dbpool.QueryRow(context.Background(), "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
+	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
 	if dbpw == pw {
 		return true, err
 	}
 	return false, err
 }
 
-func (rep *repositoryPostgres) DeletePassword(id uint) error {
-	_, err := rep.dbpool.Exec(context.Background(), "DELETE FROM passwords WHERE id = $1", id)
+func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error {
+	_, err := rep.dbpool.Exec(ctx, "DELETE FROM passwords WHERE id = $1", id)
 	return err
 }

@@ -15,13 +15,14 @@ func (handling *Handler) SignUp(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("bind: %w", err)
 	}
+	ctx := c.Request().Context()
 
-	err = handling.user.Create(usr.Id, usr.Name, usr.Male)
+	err = handling.user.Create(ctx, usr.Id, usr.Name, usr.Male)
 	if err != nil {
 		return fmt.Errorf("create method in handAuth: %w", err)
 	}
 
-	err = handling.password.Store(usr.Id, usr.Password)
+	err = handling.password.Store(ctx, usr.Id, usr.Password)
 	if err != nil {
 		return fmt.Errorf("create method in handAuth: %w", err)
 	}
@@ -42,6 +43,7 @@ func (handling *Handler) SignIn(c echo.Context) error {
 		return fmt.Errorf("GetByUserId: %w", err)
 	}
 
+	//Возможно стоит упростить эту часть?
 	var (
 		cook                  *http.Cookie
 		ifCookieExistsItIsNil error
@@ -55,6 +57,7 @@ func (handling *Handler) SignIn(c echo.Context) error {
 	}
 
 	var validToken bool
+
 	tempUUIDstring, tempUUIDerr := uuid.Parse(cook.Name)
 	if tempUUIDerr != nil {
 		return fmt.Errorf("WrongUUID: %w", tempUUIDerr)
@@ -66,7 +69,7 @@ func (handling *Handler) SignIn(c echo.Context) error {
 	}
 
 	if ifCookieExistsItIsNil != nil || !validToken {
-		validPassword, err := handling.password.Compare(usr.Id, usr.Password)
+		validPassword, err := handling.password.Compare(ctx, usr.Id, usr.Password)
 		if err != nil {
 			return fmt.Errorf("password.Compare: %w", err)
 		}

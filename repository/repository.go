@@ -14,10 +14,10 @@ import (
 )
 
 type RepositoryInterface interface {
-	GetTroughID(uint) (string, bool, error)
-	Update(uint, string, bool) error
-	Create(uint, string, bool) error
-	Delete(uint) error
+	GetTroughID(context.Context, int) (string, bool, error) //TODO стоит заменить int, strin, bool на model
+	Update(context.Context, int, string, bool) error
+	Create(context.Context, int, string, bool) error
+	Delete(context.Context, int) error
 }
 
 type repositoryMongo struct {
@@ -48,11 +48,12 @@ func NewRepository(conf config.Config) RepositoryInterface {
 
 	dbpool, err := pgxpool.New(context.Background(), "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable") //postgres://echopguser:pgadminpwd4echo@localhost:5432/echodb?sslmode=disable// os.Getenv("DATABASE_URL")
 	if err != nil {
+		dbpool.Close()
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
+		return nil
 	}
-	//defer dbpool.Close()
 
-	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name CHARACTER VARYING(30) NOT NULL, male BOOLEAN NOT NULL)")
+	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS entity (id INT PRIMARY KEY, name TEXT NOT NULL, male BOOLEAN NOT NULL)")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
 	}
@@ -62,14 +63,14 @@ func NewRepository(conf config.Config) RepositoryInterface {
 	}
 }
 
-func (rep *repositoryMongo) GetTroughID(id uint) (string, bool, error) {
+func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bool, error) {
 	var usr model.User
-	err := rep.collection.FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&usr)
+	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 	return usr.Name, usr.Male, err
 }
 
-func (rep *repositoryMongo) Create(id uint, name string, male bool) error {
-	_, err := rep.collection.InsertOne(context.Background(), bson.D{
+func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, male bool) error {
+	_, err := rep.collection.InsertOne(ctx, bson.D{
 		{Key: "_id", Value: id},
 		{Key: "name", Value: name},
 		{Key: "male", Value: male},
@@ -77,36 +78,36 @@ func (rep *repositoryMongo) Create(id uint, name string, male bool) error {
 	return err
 }
 
-func (rep *repositoryMongo) Update(id uint, name string, male bool) error {
-	_, err := rep.collection.ReplaceOne(context.Background(), bson.D{{Key: "_id", Value: id}}, bson.D{
+func (rep *repositoryMongo) Update(ctx context.Context, id int, name string, male bool) error {
+	_, err := rep.collection.ReplaceOne(ctx, bson.D{{Key: "_id", Value: id}}, bson.D{
 		{Key: "name", Value: name},
 		{Key: "male", Value: male},
 	})
 	return err
 }
 
-func (rep *repositoryMongo) Delete(id uint) error {
-	_, err := rep.collection.DeleteOne(context.Background(), bson.D{{Key: "_id", Value: id}})
+func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
+	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
 	return err
 }
 
-func (rep *repositoryPostgres) GetTroughID(id uint) (string, bool, error) {
+func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) {
 	usr := model.User{}
-	err := rep.dbpool.QueryRow(context.Background(), "SELECT name, male FROM entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
+	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 	return usr.Name, usr.Male, err
 }
 
-func (rep *repositoryPostgres) Create(id uint, name string, male bool) error {
-	_, err := rep.dbpool.Exec(context.Background(), "INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
+func (rep *repositoryPostgres) Create(ctx context.Context, id int, name string, male bool) error {
+	_, err := rep.dbpool.Exec(ctx, "INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
 	return err
 }
 
-func (rep *repositoryPostgres) Update(id uint, name string, male bool) error {
-	_, err := rep.dbpool.Exec(context.Background(), "UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
+func (rep *repositoryPostgres) Update(ctx context.Context, id int, name string, male bool) error {
+	_, err := rep.dbpool.Exec(ctx, "UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
 	return err
 }
 
-func (rep *repositoryPostgres) Delete(id uint) error {
-	_, err := rep.dbpool.Exec(context.Background(), "DELETE FROM entity WHERE id = $1", id)
+func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
+	_, err := rep.dbpool.Exec(ctx, "DELETE FROM entity WHERE id = $1", id)
 	return err
 }

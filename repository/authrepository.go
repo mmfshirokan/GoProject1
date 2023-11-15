@@ -29,11 +29,19 @@ type authRepositoryPostgres struct {
 func NewAuthRpository() AuthRepositoryInterface {
 	ctx := context.Background()
 
-	dbpool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+	dbpool, err := pgxpool.New(ctx, "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable")
 	if err != nil {
-		//fmt.Errorf("pool conection: %w", err)
+		dbpool.Close()
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		return nil
 	}
+
+	//TODO add NOT NULL tag to all colums
+	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS rf_tokens (user_id INT PRIMARY KEY, id UUID, hash TEXT, expire TIME)")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
+	}
+
 	return &authRepositoryPostgres{
 		dbpool: dbpool,
 	}
