@@ -7,7 +7,7 @@ import (
 
 	"github.com/mmfshirokan/GoProject1/config"
 	"github.com/mmfshirokan/GoProject1/handlers"
-	"github.com/mmfshirokan/GoProject1/handlers/request"
+	"github.com/mmfshirokan/GoProject1/model"
 	"github.com/mmfshirokan/GoProject1/repository"
 	"github.com/mmfshirokan/GoProject1/service"
 )
@@ -28,13 +28,14 @@ func main() {
 	hand := handlers.NewHandler(usr, pw, tok)
 
 	e := echo.New()
-	e.POST("/users/signup", hand.SignUp) // create changed to Register
+	e.POST("/users/signup", hand.SignUp)
 	e.PUT("/users/signin", hand.SignIn)
+	e.PUT("/users/refresh", hand.Refresh)
 	g := e.Group("/users/auth")
 
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(request.UserRequest)
+			return new(model.UserRequest)
 		},
 		SigningKey: []byte("secret"),
 	}

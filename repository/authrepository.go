@@ -37,7 +37,7 @@ func NewAuthRpository() AuthRepositoryInterface {
 	}
 
 	//TODO add NOT NULL tag to all colums
-	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS rf_tokens (user_id INT PRIMARY KEY, id UUID, hash TEXT, expire TIME)")
+	_, err = dbpool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS rf_tokens (user_id INT, id UUID PRIMARY KEY, hash TEXT, expire TIME)")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
 	}
@@ -81,7 +81,7 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userId int) 
 }
 
 func (rep *authRepositoryPostgres) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := rep.dbpool.Exec(ctx, "DELETE FROM rf_tokens WHERE user_id = $1", id)
+	_, err := rep.dbpool.Exec(ctx, "DELETE FROM rf_tokens WHERE id = $1", id)
 	return err
 }
 

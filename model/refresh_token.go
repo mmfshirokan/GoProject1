@@ -7,8 +7,8 @@ import (
 )
 
 type RefreshToken struct {
-	UserID     int
-	ID         uuid.UUID
-	Hash       string
-	Expiration time.Time
+	UserID     int       `json:"UserID"`
+	ID         uuid.UUID `json:"ID"`
+	Hash       string    `json:"Hash"`
+	Expiration time.Time `json:"Expiration"`
 }

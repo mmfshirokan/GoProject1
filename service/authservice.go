@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/mmfshirokan/GoProject1/handlers/request"
 	"github.com/mmfshirokan/GoProject1/model"
 	"github.com/mmfshirokan/GoProject1/repository"
 )
@@ -26,11 +25,11 @@ func NewToken(rep repository.AuthRepositoryInterface) *Token {
 	}
 }
 
-func (tok *Token) CreateAuthToken(usr model.User) string {
-	claims := &request.UserRequest{
-		Id:   usr.Id,
-		Name: usr.Name,
-		Male: usr.Male,
+func (tok *Token) CreateAuthToken(id int, name string, male bool) string {
+	claims := &model.UserRequest{
+		Id:   id,
+		Name: name,
+		Male: male,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 6)),
 		},
@@ -68,7 +67,7 @@ func (tok *Token) ValidateRfTokenTrougId(recived_hash string, id uuid.UUID) (boo
 		return false, fmt.Errorf("hashing: %w", err)
 	}
 
-	res := expected_hash == recived_hash
+	res := (expected_hash == recived_hash)
 	return res, nil
 
 }
@@ -88,6 +87,10 @@ func (tok *Token) conductHashing(id uuid.UUID) (string, error) {
 	}
 
 	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(h.Sum(nil)), nil
+}
+
+func (tok *Token) Delete(ctx context.Context, id uuid.UUID) error {
+	return tok.repo.Delete(ctx, id)
 }
 
 func (tok *Token) GetByUserID(ctx context.Context, userId int) ([]*model.RefreshToken, error) {
