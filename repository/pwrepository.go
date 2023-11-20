@@ -13,17 +13,15 @@ import (
 )
 
 type PwRepositoryInterface interface {
-	Store(context.Context, int, string) error
-	Compare(context.Context, int, string) (bool, error)
-	DeletePassword(context.Context, int) error
+	Store(ctx context.Context, id int, pw string) error
+	Compare(ctx context.Context, id int, pw string) (bool, error)
+	DeletePassword(ctx context.Context, id int) error
 }
 
 func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
-	ctx := context.Background() //should it also be some special context?
+	ctx := context.Background()
 	if conf.Database == "mongodb" {
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:6543"))
-		//defer client.Disconnect(context.Background())
-
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
 		}
@@ -56,38 +54,45 @@ func (rep *repositoryMongo) Store(ctx context.Context, id int, pw string) error 
 		{Key: "_id", Value: id},
 		{Key: "password", Value: pw},
 	})
-	return err
+
+	return fmt.Errorf("insertOne: %w", err)
 }
 
 func (rep *repositoryMongo) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	var dbpw string
+
 	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
 	if dbpw == pw {
-		return true, err
+		return true, fmt.Errorf("findOne.Decode: %w", err)
 	}
-	return false, err
+
+	return false, fmt.Errorf("findOne: %w", err)
 }
 
 func (rep *repositoryMongo) DeletePassword(ctx context.Context, id int) error {
 	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
-	return err
+
+	return fmt.Errorf("deleteOne: %w", err)
 }
 
 func (rep *repositoryPostgres) Store(ctx context.Context, id int, pw string) error {
 	_, err := rep.dbpool.Exec(ctx, "INSERT INTO passwords VALUES ($1, $2)", id, pw)
-	return err
+
+	return fmt.Errorf("dpool.Exec: %w", err)
 }
 
 func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	var dbpw string
 	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
+
 	if dbpw == pw {
-		return true, err
+		return true, fmt.Errorf("queryRow.Scan: %w", err)
 	}
-	return false, err
+
+	return false, fmt.Errorf("dpool.QueryRow: %w", err)
 }
 
 func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM passwords WHERE id = $1", id)
-	return err
+	return fmt.Errorf("dpool.Exec: %w", err)
 }

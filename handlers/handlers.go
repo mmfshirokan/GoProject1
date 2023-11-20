@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/mmfshirokan/GoProject1/model"
 	"github.com/mmfshirokan/GoProject1/service"
-
-	"net/http"
-	"strconv"
 )
 
 type Handler struct {
@@ -24,28 +25,63 @@ func NewHandler(usr *service.User, usrpw *service.Password, tok *service.Token) 
 	}
 }
 
-func (hand *Handler) GetUser(c echo.Context) error {
+func (handling *Handler) GetUser(c echo.Context) error {
 	c.Request().Context()
-	token := c.Get("user").(*jwt.Token)
-	claims := token.Claims.(*model.UserRequest)
-	return c.String(http.StatusOK, "Usser id: "+strconv.FormatInt(int64(claims.Id), 10)+"\nUser name: "+claims.Name+"\nUser male:"+strconv.FormatBool(claims.Male)+"\n")
-}
 
-func (hand *Handler) UpdateUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	token := c.Get("user").(*jwt.Token)
-	claims := token.Claims.(*model.UserRequest)
-	err := hand.user.Update(ctx, claims.Id, claims.Name, claims.Male)
-	return err
-}
-
-func (hand *Handler) DeleteUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	token := c.Get("user").(*jwt.Token)
-	claims := token.Claims.(*model.UserRequest)
-	if err := hand.user.Delete(ctx, claims.Id); err != nil {
-		return err
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return nil
 	}
-	err := hand.password.DeletePassword(ctx, claims.Id)
+
+	claims, ok := token.Claims.(*model.UserRequest)
+	if !ok {
+		return nil
+	}
+
+	return c.String(http.StatusOK, fmt.Sprint(
+		"Usser id: ",
+		strconv.FormatInt(int64(claims.ID), 10),
+		"\nUser name: ",
+		claims.Name,
+		"\nUser male:",
+		strconv.FormatBool(claims.Male),
+		"\n",
+	))
+}
+
+func (handling *Handler) UpdateUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	token, ok := c.Get("user").(*jwt.Token)
+
+	if !ok {
+		return nil
+	}
+
+	claims, ok := token.Claims.(*model.UserRequest)
+	if !ok {
+		return nil
+	}
+
+	err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male)
+	return fmt.Errorf("user.Update: %w", err)
+}
+
+func (handling *Handler) DeleteUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	token, ok := c.Get("user").(*jwt.Token)
+
+	if !ok {
+		return nil
+	}
+
+	claims, ok := token.Claims.(*model.UserRequest)
+	if !ok {
+		return nil
+	}
+
+	if err := handling.user.Delete(ctx, claims.ID); err != nil {
+		return fmt.Errorf("delete: %w", err)
+	}
+	err := handling.password.DeletePassword(ctx, claims.ID)
 	return err
 }
