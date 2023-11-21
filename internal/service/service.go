@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mmfshirokan/GoProject1/repository"
+	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
 
 type User struct {
@@ -17,8 +17,8 @@ func NewUser(repo repository.Interface) *User {
 	}
 }
 
-func (serv *User) GetTroughID(ctx context.Context, id int) (string, bool, error) {
-	str, bl, err := serv.rep.GetTroughID(ctx, id)
+func (serv *User) GetTroughID(ctx context.Context, id int) (str string, bl bool, err error) {
+	str, bl, err = serv.rep.GetTroughID(ctx, id)
 
 	return str, bl, fmt.Errorf("rep.GetTroughID: %w", err)
 }

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mmfshirokan/GoProject1/model"
+	"github.com/mmfshirokan/GoProject1/internal/model"
 )
 
 type AuthRepositoryInterface interface {

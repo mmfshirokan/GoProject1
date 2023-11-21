@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mmfshirokan/GoProject1/config"
-	"github.com/mmfshirokan/GoProject1/model"
+	"github.com/mmfshirokan/GoProject1/internal/config"
+	"github.com/mmfshirokan/GoProject1/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -68,7 +68,7 @@ func NewRepository(conf config.Config) Interface {
 	}
 }
 
-func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bool, error) {
+func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
 	var usr model.User
 	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 
@@ -100,7 +100,7 @@ func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
 	return fmt.Errorf("%w", err)
 }
 
-func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) {
+func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
 	usr := model.User{}
 	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 

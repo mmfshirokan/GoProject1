@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mmfshirokan/GoProject1/config"
+	"github.com/mmfshirokan/GoProject1/internal/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,7 +20,7 @@ type PwRepositoryInterface interface {
 
 func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	ctx := context.Background()
-	if conf.Database == "mongodb" {
+	if conf.Database == "mongodb" { //nolint:goconst // it is unconvinient to use mongodb as const value
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:6543"))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)

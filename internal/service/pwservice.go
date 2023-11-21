@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mmfshirokan/GoProject1/repository"
+	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
 
 type Password struct {

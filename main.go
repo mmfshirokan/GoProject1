@@ -4,11 +4,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/mmfshirokan/GoProject1/config"
-	"github.com/mmfshirokan/GoProject1/handlers"
-	"github.com/mmfshirokan/GoProject1/model"
-	"github.com/mmfshirokan/GoProject1/repository"
-	"github.com/mmfshirokan/GoProject1/service"
+	"github.com/mmfshirokan/GoProject1/internal/config"
+	"github.com/mmfshirokan/GoProject1/internal/handlers"
+	"github.com/mmfshirokan/GoProject1/internal/model"
+	"github.com/mmfshirokan/GoProject1/internal/repository"
+	"github.com/mmfshirokan/GoProject1/internal/service"
 )
 
 func main() {
@@ -32,14 +32,14 @@ func main() {
 	echoServ.PUT("/users/refresh", hand.Refresh)
 	group := echoServ.Group("/users/auth")
 
-	config := echojwt.Config{
+	echoConf := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(model.UserRequest)
 		},
 		SigningKey: []byte("secret"),
 	}
 
-	group.Use(echojwt.WithConfig(config))
+	group.Use(echojwt.WithConfig(echoConf))
 	group.GET("/get", hand.GetUser)
 	group.PUT("/update", hand.UpdateUser)
 	group.DELETE("/delete", hand.DeleteUser)

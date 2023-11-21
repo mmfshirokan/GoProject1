@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/mmfshirokan/GoProject1/model"
+	"github.com/mmfshirokan/GoProject1/internal/model"
 )
 
 func (handling *Handler) SignUp(echoContext echo.Context) error {

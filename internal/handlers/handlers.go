@@ -7,8 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/mmfshirokan/GoProject1/model"
-	"github.com/mmfshirokan/GoProject1/service"
+	"github.com/mmfshirokan/GoProject1/internal/model"
+	"github.com/mmfshirokan/GoProject1/internal/service"
 )
 
 type Handler struct {
@@ -28,13 +28,13 @@ func NewHandler(usr *service.User, usrpw *service.Password, tok *service.Token) 
 func (handling *Handler) GetUser(c echo.Context) error {
 	c.Request().Context()
 
-	token, ok := c.Get("user").(*jwt.Token)
-	if !ok {
+	token, okey := c.Get("user").(*jwt.Token)
+	if !okey {
 		return nil
 	}
 
-	claims, ok := token.Claims.(*model.UserRequest)
-	if !ok {
+	claims, okey := token.Claims.(*model.UserRequest)
+	if !okey {
 		return nil
 	}
 
@@ -51,14 +51,14 @@ func (handling *Handler) GetUser(c echo.Context) error {
 
 func (handling *Handler) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	token, ok := c.Get("user").(*jwt.Token)
+	token, okey := c.Get("user").(*jwt.Token)
 
-	if !ok {
+	if !okey {
 		return nil
 	}
 
-	claims, ok := token.Claims.(*model.UserRequest)
-	if !ok {
+	claims, okey := token.Claims.(*model.UserRequest)
+	if !okey {
 		return nil
 	}
 
@@ -69,14 +69,14 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 
 func (handling *Handler) DeleteUser(c echo.Context) error {
 	ctx := c.Request().Context()
-	token, ok := c.Get("user").(*jwt.Token)
+	token, okey := c.Get("user").(*jwt.Token)
 
-	if !ok {
+	if !okey {
 		return nil
 	}
 
-	claims, ok := token.Claims.(*model.UserRequest)
-	if !ok {
+	claims, okey := token.Claims.(*model.UserRequest)
+	if !okey {
 		return nil
 	}
 
