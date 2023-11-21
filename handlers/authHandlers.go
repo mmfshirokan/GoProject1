@@ -56,6 +56,7 @@ func (handling *Handler) SignIn(echoContext echo.Context) error {
 	}
 
 	var refeshTokens []*model.RefreshToken
+
 	refeshTokens, err = handling.token.GetByUserID(ctx, usr.ID)
 	if err != nil {
 		return fmt.Errorf("token.GetTokenTroughId: %w", err)
@@ -76,6 +77,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 	}
 
 	ctx := echoContext.Request().Context()
+
 	valid, err := handling.token.ValidateRfTokenTrougID(refreshToken.Hash, refreshToken.ID)
 	if err != nil {
 		return fmt.Errorf("error ocured while validating rf_token: %w", err)

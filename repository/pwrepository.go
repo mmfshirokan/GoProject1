@@ -94,5 +94,6 @@ func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (
 
 func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM passwords WHERE id = $1", id)
+
 	return fmt.Errorf("dpool.Exec: %w", err)
 }

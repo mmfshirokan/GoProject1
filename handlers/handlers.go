@@ -38,7 +38,7 @@ func (handling *Handler) GetUser(c echo.Context) error {
 		return nil
 	}
 
-	return c.String(http.StatusOK, fmt.Sprint(
+	return fmt.Errorf("%w", c.String(http.StatusOK, fmt.Sprint(
 		"Usser id: ",
 		strconv.FormatInt(int64(claims.ID), 10),
 		"\nUser name: ",
@@ -46,7 +46,7 @@ func (handling *Handler) GetUser(c echo.Context) error {
 		"\nUser male:",
 		strconv.FormatBool(claims.Male),
 		"\n",
-	))
+	)))
 }
 
 func (handling *Handler) UpdateUser(c echo.Context) error {
@@ -63,6 +63,7 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 	}
 
 	err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male)
+
 	return fmt.Errorf("user.Update: %w", err)
 }
 
@@ -82,6 +83,8 @@ func (handling *Handler) DeleteUser(c echo.Context) error {
 	if err := handling.user.Delete(ctx, claims.ID); err != nil {
 		return fmt.Errorf("delete: %w", err)
 	}
+
 	err := handling.password.DeletePassword(ctx, claims.ID)
-	return err
+
+	return fmt.Errorf("%w", err)
 }

@@ -19,6 +19,7 @@ func NewUser(repo repository.Interface) *User {
 
 func (serv *User) GetTroughID(ctx context.Context, id int) (string, bool, error) {
 	str, bl, err := serv.rep.GetTroughID(ctx, id)
+
 	return str, bl, fmt.Errorf("rep.GetTroughID: %w", err)
 }
 

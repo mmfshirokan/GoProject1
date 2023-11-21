@@ -23,6 +23,7 @@ func (usr *Password) Store(ctx context.Context, id int, pw string) error {
 
 func (usr *Password) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	bl, err := usr.rep.Compare(ctx, id, pw)
+
 	return bl, fmt.Errorf("rep.Compare: %w", err)
 }
 

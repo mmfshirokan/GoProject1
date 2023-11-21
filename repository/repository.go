@@ -44,7 +44,10 @@ func NewRepository(conf config.Config) Interface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable") //postgres://echopguser:pgadminpwd4echo@localhost:5432/echodb?sslmode=disable// os.Getenv("DATABASE_URL")
+	dbpool, err := pgxpool.New(context.Background(), fmt.Sprint(
+		"postgres://echopguser:pgpw4echo@localhost",
+		":5432/echodb?sslmode=disable",
+	))
 	if err != nil {
 		dbpool.Close()
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
@@ -69,7 +72,7 @@ func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bo
 	var usr model.User
 	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 
-	return usr.Name, usr.Male, err
+	return usr.Name, usr.Male, fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, male bool) error {
@@ -79,7 +82,7 @@ func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, mal
 		{Key: "male", Value: male},
 	})
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryMongo) Update(ctx context.Context, id int, name string, male bool) error {
@@ -88,36 +91,36 @@ func (rep *repositoryMongo) Update(ctx context.Context, id int, name string, mal
 		{Key: "male", Value: male},
 	})
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
 	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) {
 	usr := model.User{}
 	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 
-	return usr.Name, usr.Male, err
+	return usr.Name, usr.Male, fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryPostgres) Create(ctx context.Context, id int, name string, male bool) error {
 	_, err := rep.dbpool.Exec(ctx, "INSERT INTO entity VALUES ($1, $2, $3)", id, name, male)
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryPostgres) Update(ctx context.Context, id int, name string, male bool) error {
 	_, err := rep.dbpool.Exec(ctx, "UPDATE entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM entity WHERE id = $1", id)
 
-	return err
+	return fmt.Errorf("%w", err)
 }

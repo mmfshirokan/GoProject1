@@ -47,6 +47,7 @@ func NewAuthRpository() AuthRepositoryInterface {
 
 func (rep *authRepositoryPostgres) Create(ctx context.Context, token *model.RefreshToken) error {
 	const maxNumberOfTokens = 5
+
 	reshreshTokens, _ := rep.GetByUserID(ctx, token.UserID)
 
 	if len(reshreshTokens) > maxNumberOfTokens {
@@ -65,7 +66,6 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 		"SELECT id, user_id, hash, expire ",
 		"FROM rf_tokens WHERE user_id = $1 order by expire desc",
 	), userID)
-
 	if err != nil {
 		return make([]*model.RefreshToken, 0), fmt.Errorf("query %w", err)
 	}
@@ -75,8 +75,8 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 
 	for rows.Next() {
 		item := &model.RefreshToken{}
-		err := rows.Scan(&item.ID, &item.UserID, &item.Hash, &item.Expiration)
 
+		err := rows.Scan(&item.ID, &item.UserID, &item.Hash, &item.Expiration)
 		if err != nil {
 			return make([]*model.RefreshToken, 0), fmt.Errorf("scan %w", err)
 		}
