@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS passwords (id INT PRIMARY KEY, password TEXT NOT NULL);

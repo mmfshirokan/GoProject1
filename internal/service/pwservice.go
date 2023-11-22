@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
@@ -18,15 +17,13 @@ func NewPassword(repo repository.PwRepositoryInterface) *Password {
 }
 
 func (usr *Password) Store(ctx context.Context, id int, pw string) error {
-	return fmt.Errorf("rep.Store: %w", usr.rep.Store(ctx, id, pw))
+	return usr.rep.Store(ctx, id, pw)
 }
 
 func (usr *Password) Compare(ctx context.Context, id int, pw string) (bool, error) {
-	bl, err := usr.rep.Compare(ctx, id, pw)
-
-	return bl, fmt.Errorf("rep.Compare: %w", err)
+	return usr.rep.Compare(ctx, id, pw)
 }
 
 func (usr *Password) DeletePassword(ctx context.Context, id int) error {
-	return fmt.Errorf("rep.DeletePassword: %w", usr.rep.DeletePassword(ctx, id))
+	return usr.rep.DeletePassword(ctx, id)
 }

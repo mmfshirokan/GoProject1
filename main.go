@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -9,16 +11,18 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/service"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	conf := config.Config{
-		Database: "postgres",
-	}
+	log := logrus.New()
+	log.Out = os.Stdout
+
+	conf := config.NewConfig()
 
 	repo := repository.NewRepository(conf)
 	pwRepo := repository.NewPasswordRepository(conf)
-	authRepo := repository.NewAuthRpository()
+	authRepo := repository.NewAuthRpository(conf)
 
 	usr := service.NewUser(repo)
 	pw := service.NewPassword(pwRepo)

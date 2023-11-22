@@ -56,14 +56,12 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 		return fmt.Errorf("hashing: %w", err)
 	}
 
-	return fmt.Errorf(
-		"repo.Create: %w", tok.repo.Create(ctx, &model.RefreshToken{
-			UserID:     userID,
-			ID:         id,
-			Hash:       hashedID,
-			Expiration: time.Now().Add(time.Hour * refreshTokenLifeTime),
-		}),
-	)
+	return tok.repo.Create(ctx, &model.RefreshToken{
+		UserID:     userID,
+		ID:         id,
+		Hash:       hashedID,
+		Expiration: time.Now().Add(time.Hour * refreshTokenLifeTime),
+	})
 }
 
 func (tok *Token) ValidateRfTokenTrougID(receivedHash string, id uuid.UUID) (bool, error) {
@@ -96,11 +94,9 @@ func (tok *Token) conductHashing(id uuid.UUID) (string, error) {
 }
 
 func (tok *Token) Delete(ctx context.Context, id uuid.UUID) error {
-	return fmt.Errorf("repo.Delete: %w", tok.repo.Delete(ctx, id))
+	return tok.repo.Delete(ctx, id)
 }
 
 func (tok *Token) GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error) {
-	result, err := tok.repo.GetByUserID(ctx, userID)
-
-	return result, fmt.Errorf("repo.GetByUserID: %w", err)
+	return tok.repo.GetByUserID(ctx, userID)
 }

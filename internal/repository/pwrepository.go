@@ -20,8 +20,9 @@ type PwRepositoryInterface interface {
 
 func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	ctx := context.Background()
-	if conf.Database == "mongodb" { //nolint:goconst // it is unconvinient to use mongodb as const value
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:6543"))
+
+	if conf.Database == "mongodb" {
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoURL))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
 		}
@@ -34,14 +35,9 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(ctx, "postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable")
+	dbpool, err := pgxpool.New(ctx, conf.PostgresURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
-	}
-
-	_, err = dbpool.Exec(ctx, "CREATE TABLE IF NOT EXISTS passwords (id INT PRIMARY KEY, password TEXT NOT NULL)")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create table in PostgresDB: %v\n", err)
 	}
 
 	return &repositoryPostgres{
@@ -55,7 +51,7 @@ func (rep *repositoryMongo) Store(ctx context.Context, id int, pw string) error 
 		{Key: "password", Value: pw},
 	})
 
-	return fmt.Errorf("insertOne: %w", err)
+	return err
 }
 
 func (rep *repositoryMongo) Compare(ctx context.Context, id int, pw string) (bool, error) {
@@ -66,34 +62,34 @@ func (rep *repositoryMongo) Compare(ctx context.Context, id int, pw string) (boo
 		return true, fmt.Errorf("findOne.Decode: %w", err)
 	}
 
-	return false, fmt.Errorf("findOne: %w", err)
+	return false, err
 }
 
 func (rep *repositoryMongo) DeletePassword(ctx context.Context, id int) error {
 	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
 
-	return fmt.Errorf("deleteOne: %w", err)
+	return err
 }
 
 func (rep *repositoryPostgres) Store(ctx context.Context, id int, pw string) error {
-	_, err := rep.dbpool.Exec(ctx, "INSERT INTO passwords VALUES ($1, $2)", id, pw)
+	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.passwords VALUES ($1, $2)", id, pw)
 
-	return fmt.Errorf("dpool.Exec: %w", err)
+	return err
 }
 
 func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (bool, error) {
 	var dbpw string
-	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM passwords WHERE id = $1", id).Scan(&dbpw)
+	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM apps.passwords WHERE id = $1", id).Scan(&dbpw)
 
 	if dbpw == pw {
-		return true, fmt.Errorf("queryRow.Scan: %w", err)
+		return true, err
 	}
 
-	return false, fmt.Errorf("dpool.QueryRow: %w", err)
+	return false, err
 }
 
 func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error {
-	_, err := rep.dbpool.Exec(ctx, "DELETE FROM passwords WHERE id = $1", id)
+	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.passwords WHERE id = $1", id)
 
-	return fmt.Errorf("dpool.Exec: %w", err)
+	return err
 }

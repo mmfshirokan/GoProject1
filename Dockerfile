@@ -1,9 +1,9 @@
 FROM golang:latest
 
-WORKDIR /go/src/project1/
+WORKDIR /projects/project1/GoProject1
 
 ADD go.mod go.sum main.go ./
-ADD service handlers repository ./
+ADD internal /projects/project1/GoProject1/internal
 
 EXPOSE 8080
 

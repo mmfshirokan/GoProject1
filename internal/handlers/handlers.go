@@ -3,12 +3,14 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/service"
+	log "github.com/sirupsen/logrus"
 )
 
 type Handler struct {
@@ -26,19 +28,25 @@ func NewHandler(usr *service.User, usrpw *service.Password, tok *service.Token) 
 }
 
 func (handling *Handler) GetUser(c echo.Context) error {
+	logInit()
+
 	c.Request().Context()
 
 	token, okey := c.Get("user").(*jwt.Token)
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
-	return fmt.Errorf("%w", c.String(http.StatusOK, fmt.Sprint(
+	err := c.String(http.StatusOK, fmt.Sprint(
 		"Usser id: ",
 		strconv.FormatInt(int64(claims.ID), 10),
 		"\nUser name: ",
@@ -46,45 +54,80 @@ func (handling *Handler) GetUser(c echo.Context) error {
 		"\nUser male:",
 		strconv.FormatBool(claims.Male),
 		"\n",
-	)))
+	))
+	if err != nil {
+		log.Error(fmt.Errorf("%w", err))
+
+		return echo.NewHTTPError(400, err.Error())
+	}
+
+	return nil
 }
 
 func (handling *Handler) UpdateUser(c echo.Context) error {
+	logInit()
+
 	ctx := c.Request().Context()
 	token, okey := c.Get("user").(*jwt.Token)
 
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
-	err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male)
+	if err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male); err != nil {
+		log.Error(fmt.Errorf("%w", err))
 
-	return fmt.Errorf("user.Update: %w", err)
+		return echo.NewHTTPError(400, err.Error())
+	}
+
+	return nil
 }
 
 func (handling *Handler) DeleteUser(c echo.Context) error {
+	logInit()
+
 	ctx := c.Request().Context()
 	token, okey := c.Get("user").(*jwt.Token)
 
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
-		return nil
+		log.Error(fmt.Errorf("jwt agregation failed"))
+
+		return echo.NewHTTPError(400)
 	}
 
 	if err := handling.user.Delete(ctx, claims.ID); err != nil {
-		return fmt.Errorf("delete: %w", err)
+		log.Error(fmt.Errorf("%w", err))
+
+		return echo.NewHTTPError(400, err.Error())
 	}
 
-	err := handling.password.DeletePassword(ctx, claims.ID)
+	if err := handling.password.DeletePassword(ctx, claims.ID); err != nil {
+		log.Error(fmt.Errorf("%w", err))
 
-	return fmt.Errorf("%w", err)
+		return echo.NewHTTPError(400, err.Error())
+	}
+
+	return nil
+}
+
+func logInit() {
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.ErrorLevel)
+	log.SetFormatter(&log.TextFormatter{})
 }

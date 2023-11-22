@@ -1,40 +1,15 @@
 version: "2.22"
 services:
+
   server:
     container_name: "server_container"
-    build: /
+    build: /home/andreishyrakanau/projects/project1/GoProject1/
     ports: 
       - 8081:8081
     networks:
       - mongonet
       - postgres
-  mongo:
-    container_name: "mongo_container"
-    image: mongo:latest
-    environment:
-     MONGO_INITDB_ROOT_USERNAME: "root"
-     MONGO_INITDB_ROOT_PASSWORD: "rootpassword"
-    volumes:
-      - mongodb_data:/var/lib/mongodb/data
-    ports:
-      - 6543:6543
-    restart: unless-stopped
-    networks:
-      - mongonet
-  mongoexpress:
-    container_name: mongo_express
-    image: mongo-express:latest
-    environment:
-      ME_CONFIG_BASICAUTH_USERNAME: "root"
-      ME_CONFIG_BASICAUTH_PASSWORD: "rootpasswoed"
-      ME_CONFIG_MONGODB_PORT: "6543"
-    volumes:
-      - mongo_express:/var/lib/mongoexpress
-    ports: 
-      - "6060:6060"
-    restart: unless-stopped
-    networks:
-      - mongonet
+
   postgres:
     container_name: "postgres_container"
     image: postgres:latest
@@ -50,6 +25,7 @@ services:
     restart: unless-stopped
     networks:
       - postgres
+
   pgadmin:
     container_name: pgadmin_container
     image: dpage/pgadmin4:latest
@@ -62,13 +38,32 @@ services:
     ports: 
       - "5050:80"
     restart: unless-stopped
+    depends_on:
+      - postgres
     networks:
       - postgres
+
+  flyway:
+    image: flyway/flyway:9
+    container_name: flyway
+    platform: linux/amd64
+    volumes:
+      - "./migrations/sql:/app/sql"
+    environment:
+      - FLYWAY_CONNECT_RETRIES=60
+      - FLYWAY_LOCATIONS=filesystem:/app/sql
+      - FLYWAY_SCHEMAS=${FLYWAY_SCHEMAS}
+    command: -url=jdbc:postgresql://postgres/${POSTGRES_DB} -user=${POSTGRES_USER} -password=${POSTGRES_PASSWORD} -connectRetries=60 migrate
+    depends_on:
+      - postgres
+    networks:
+      - postgres
+
 networks:
   postgres:
-    driver: bridge
+    #driver: bridge
   mongonet:
-    driver: bridge
+    #driver: bridge
 volumes:
   echodb_data:
   pgadmin_data:
