@@ -59,9 +59,13 @@ func NewRepository(conf config.Config) Interface {
 
 func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
 	var usr model.User
-	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 
-	return usr.Name, usr.Male, err
+	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
+	if err != nil {
+		return "", false, fmt.Errorf("findOne.Decode in repository.GetTroughID: %w", err)
+	}
+
+	return usr.Name, usr.Male, nil
 }
 
 func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, male bool) error {
@@ -70,8 +74,11 @@ func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, mal
 		{Key: "name", Value: name},
 		{Key: "male", Value: male},
 	})
+	if err != nil {
+		return fmt.Errorf("insertOne in repository.Create: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (rep *repositoryMongo) Update(ctx context.Context, id int, name string, male bool) error {
@@ -79,37 +86,56 @@ func (rep *repositoryMongo) Update(ctx context.Context, id int, name string, mal
 		{Key: "name", Value: name},
 		{Key: "male", Value: male},
 	})
+	if err != nil {
+		return fmt.Errorf("replaceOne in repository.Update: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
 	_, err := rep.collection.DeleteOne(ctx, bson.D{{Key: "_id", Value: id}})
+	if err != nil {
+		return fmt.Errorf("deleteOne in repository.Delete: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
 	usr := model.User{}
-	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 
-	return usr.Name, usr.Male, err
+	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
+	if err != nil {
+		return "", false, fmt.Errorf("queryRow in repository.GetTroughID: %w", err)
+	}
+
+	return usr.Name, usr.Male, nil
 }
 
 func (rep *repositoryPostgres) Create(ctx context.Context, id int, name string, male bool) error {
 	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.entity VALUES ($1, $2, $3)", id, name, male)
+	if err != nil {
+		return fmt.Errorf("exec in repository.Create: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (rep *repositoryPostgres) Update(ctx context.Context, id int, name string, male bool) error {
 	_, err := rep.dbpool.Exec(ctx, "UPDATE apps.entity SET name = $1, male = $2 WHERE id = $3", name, male, id)
+	if err != nil {
+		return fmt.Errorf("exec in repository.Update: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.entity WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("exec in repository.Delete: %w", err)
+	}
 
-	return err
+	return nil
 }

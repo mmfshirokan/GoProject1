@@ -53,7 +53,7 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 
 	hashedID, err := tok.conductHashing(id)
 	if err != nil {
-		return fmt.Errorf("hashing: %w", err)
+		return fmt.Errorf("authService.conductHasing in authService.CreateRfToken: %w", err)
 	}
 
 	return tok.repo.Create(ctx, &model.RefreshToken{
@@ -67,7 +67,7 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 func (tok *Token) ValidateRfTokenTrougID(receivedHash string, id uuid.UUID) (bool, error) {
 	expectedHash, err := tok.conductHashing(id)
 	if err != nil {
-		return false, fmt.Errorf("hashing: %w", err)
+		return false, fmt.Errorf("authService.conductHasing in authService.ValidateRfTokenTrougID: %w", err)
 	}
 
 	res := (expectedHash == receivedHash)

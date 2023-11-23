@@ -22,7 +22,7 @@ type authRepositoryPostgres struct {
 }
 
 func NewAuthRpository(conf config.Config) AuthRepositoryInterface {
-	if conf.Database == "mongodb" {
+	if conf.Database == "mongodb" { //nolint:goconst //unnecessary const
 		return nil
 	}
 
@@ -48,13 +48,15 @@ func (rep *authRepositoryPostgres) Create(ctx context.Context, token *model.Refr
 
 	if len(reshreshTokens) > maxNumberOfTokens {
 		if err := rep.Delete(ctx, reshreshTokens[0].ID); err != nil {
-			return fmt.Errorf("%w", err)
+			return fmt.Errorf("authRepository.Delte in authRepository.Create: %w", err)
 		}
 	}
 
-	err := rep.create(ctx, token)
+	if err := rep.create(ctx, token); err != nil {
+		return fmt.Errorf("authRepository.create in authRepository.Create")
+	}
 
-	return err
+	return nil
 }
 
 func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error) {
@@ -64,7 +66,7 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 	), userID)
 
 	if err != nil {
-		return make([]*model.RefreshToken, 0), fmt.Errorf("query %w", err)
+		return make([]*model.RefreshToken, 0), fmt.Errorf("query in GetByUserID: %w", err)
 	}
 	defer rows.Close()
 
@@ -75,7 +77,7 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 
 		err := rows.Scan(&item.ID, &item.UserID, &item.Hash, &item.Expiration)
 		if err != nil {
-			return make([]*model.RefreshToken, 0), fmt.Errorf("%w", err)
+			return make([]*model.RefreshToken, 0), fmt.Errorf("rows.Scan in authRepository.GetByUSerID: %w", err)
 		}
 
 		retsult = append(retsult, item)
@@ -86,8 +88,11 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 
 func (rep *authRepositoryPostgres) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.rf_tokens WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("exec in authRepository.Delete")
+	}
 
-	return err
+	return nil
 }
 
 func (rep *authRepositoryPostgres) create(ctx context.Context, token *model.RefreshToken) error {
@@ -95,6 +100,9 @@ func (rep *authRepositoryPostgres) create(ctx context.Context, token *model.Refr
 		"INSERT INTO apps.rf_tokens ",
 		"VALUES ($1, $2, $3, $4)",
 	), token.UserID, token.ID, token.Hash, token.Expiration)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
-	return err
+	return nil
 }

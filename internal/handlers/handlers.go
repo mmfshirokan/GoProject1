@@ -36,14 +36,14 @@ func (handling *Handler) GetUser(c echo.Context) error {
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	err := c.String(http.StatusOK, fmt.Sprint(
@@ -58,7 +58,7 @@ func (handling *Handler) GetUser(c echo.Context) error {
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
-		return echo.NewHTTPError(400, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
@@ -73,20 +73,20 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male); err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
-		return echo.NewHTTPError(400, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
@@ -101,26 +101,26 @@ func (handling *Handler) DeleteUser(c echo.Context) error {
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	claims, okey := token.Claims.(*model.UserRequest)
 	if !okey {
 		log.Error(fmt.Errorf("jwt agregation failed"))
 
-		return echo.NewHTTPError(400)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if err := handling.user.Delete(ctx, claims.ID); err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
-		return echo.NewHTTPError(400, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if err := handling.password.DeletePassword(ctx, claims.ID); err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
-		return echo.NewHTTPError(400, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil

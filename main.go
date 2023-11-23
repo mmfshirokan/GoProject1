@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -11,14 +13,15 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/service"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	log := logrus.New()
-	log.Out = os.Stdout
-
 	conf := config.NewConfig()
+	val := validator.New(validator.WithRequiredStructEnabled())
+
+	if err := val.Struct(&conf); err != nil {
+		fmt.Fprint(os.Stderr, "invalid config fild/s")
+	}
 
 	repo := repository.NewRepository(conf)
 	pwRepo := repository.NewPasswordRepository(conf)
