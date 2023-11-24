@@ -50,5 +50,7 @@ func main() {
 	group.GET("/get", hand.GetUser)
 	group.PUT("/update", hand.UpdateUser)
 	group.DELETE("/delete", hand.DeleteUser)
+	group.PUT("/uploadImage", hand.UploadImage)
+	group.PUT("/downloadImage", hand.DownloadImage)
 	echoServ.Logger.Fatal(echoServ.Start(":8081"))
 }

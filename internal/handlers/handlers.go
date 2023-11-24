@@ -56,7 +56,7 @@ func (handling *Handler) GetUser(c echo.Context) error {
 		"\n",
 	))
 	if err != nil {
-		log.Error(fmt.Errorf("%w", err))
+		log.Error(fmt.Errorf("handlers.GetUser; c.String: %w", err))
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -84,7 +84,7 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 	}
 
 	if err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male); err != nil {
-		log.Error(fmt.Errorf("%w", err))
+		log.Error(fmt.Errorf("handling.user.Update: %w", err))
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -112,13 +112,13 @@ func (handling *Handler) DeleteUser(c echo.Context) error {
 	}
 
 	if err := handling.user.Delete(ctx, claims.ID); err != nil {
-		log.Error(fmt.Errorf("%w", err))
+		log.Error(fmt.Errorf("handling.user.Delete: %w", err))
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if err := handling.password.DeletePassword(ctx, claims.ID); err != nil {
-		log.Error(fmt.Errorf("%w", err))
+		log.Error(fmt.Errorf("handling.password.DeletePassword: %w", err))
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
