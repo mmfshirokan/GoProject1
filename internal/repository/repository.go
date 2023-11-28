@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mmfshirokan/GoProject1/internal/config"
@@ -26,12 +27,13 @@ type repositoryMongo struct {
 }
 
 type repositoryPostgres struct {
-	dbpool *pgxpool.Pool
+	dbpool   *pgxpool.Pool
+	redisrep *repositoryRedis[model.User]
 }
 
 func NewRepository(conf config.Config) Interface {
 	if conf.Database == "mongodb" {
-		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(conf.MongoURL))
+		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(conf.MongoURI))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
 		}
@@ -44,7 +46,7 @@ func NewRepository(conf config.Config) Interface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), conf.PostgresURL)
+	dbpool, err := pgxpool.New(context.Background(), conf.PostgresURI)
 	if err != nil {
 		dbpool.Close()
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
@@ -53,7 +55,8 @@ func NewRepository(conf config.Config) Interface {
 	}
 
 	return &repositoryPostgres{
-		dbpool: dbpool,
+		dbpool:   dbpool,
+		redisrep: NewUserRedisRepository(conf),
 	}
 }
 
@@ -104,10 +107,22 @@ func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
 
 func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
 	usr := model.User{}
+	usr, err := rep.redisrep.Get(ctx, strconv.FormatInt(int64(id), 10))
 
-	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 	if err != nil {
-		return "", false, fmt.Errorf("queryRow in repository.GetTroughID: %w", err)
+		err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
+		if err != nil {
+			return "", false, fmt.Errorf("queryRow in repository.GetTroughID: %w", err)
+		}
+
+		err = rep.redisrep.Set(ctx, strconv.FormatInt(int64(id), 10), model.User{
+			ID:   id,
+			Name: usr.Name,
+			Male: usr.Male,
+		})
+		if err != nil {
+			return "", false, fmt.Errorf("%w", err)
+		}
 	}
 
 	return usr.Name, usr.Male, nil
@@ -128,6 +143,11 @@ func (rep *repositoryPostgres) Update(ctx context.Context, id int, name string, 
 		return fmt.Errorf("exec in repository.Update: %w", err)
 	}
 
+	err = rep.redisrep.Remove(ctx, strconv.FormatInt(int64(id), 10))
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
 	return nil
 }
 
@@ -135,6 +155,11 @@ func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.entity WHERE id = $1", id)
 	if err != nil {
 		return fmt.Errorf("exec in repository.Delete: %w", err)
+	}
+
+	err = rep.redisrep.Remove(ctx, strconv.FormatInt(int64(id), 10))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "redis hash wasn't there %v", id)
 	}
 
 	return nil

@@ -58,14 +58,36 @@ services:
       - postgres
     networks:
       - postgres
+  
+  usercache:
+    image: redis:latest
+    #restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --loglevel warning
+    volumes: 
+      - cache:/data
+    networks:
+      - postgres
+
+  rftrcache:
+    image: redis:latest
+    #restart: always
+    ports:
+      - "6380:6380"
+    command: redis-server --loglevel warning
+    volumes: 
+      - cache:/data
+    networks:
+      - postgres
 
 networks:
   postgres:
-    #driver: bridge
   mongonet:
-    #driver: bridge
 volumes:
   echodb_data:
   pgadmin_data:
   mongodb_data:
   mongo_express:
+  cache:
+    driver: local

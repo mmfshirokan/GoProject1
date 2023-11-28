@@ -23,7 +23,7 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 	ctx := context.Background()
 
 	if conf.Database == "mongodb" {
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoURL))
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoURI))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
 		}
@@ -36,7 +36,7 @@ func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
 		}
 	}
 
-	dbpool, err := pgxpool.New(ctx, conf.PostgresURL)
+	dbpool, err := pgxpool.New(ctx, conf.PostgresURI)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 	}
