@@ -61,23 +61,23 @@ services:
   
   usercache:
     image: redis:latest
-    #restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
     command: redis-server --loglevel warning
     volumes: 
-      - cache:/data
+      - cache:/userdata
     networks:
       - postgres
 
   rftrcache:
     image: redis:latest
-    #restart: always
+    restart: unless-stopped
     ports:
       - "6380:6380"
     command: redis-server --loglevel warning
     volumes: 
-      - cache:/data
+      - cache:/rfdata
     networks:
       - postgres
 

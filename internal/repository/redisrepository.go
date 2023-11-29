@@ -25,6 +25,13 @@ func NewUserRedisRepository(conf config.Config) *repositoryRedis[model.User] {
 		return nil
 	}
 
+	newClient := redis.NewClient(opts)
+
+	err = newClient.Ping(context.Background()).Err()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
+
 	return &repositoryRedis[model.User]{
 		client: redis.NewClient(opts),
 		model:  &model.User{},
@@ -39,6 +46,13 @@ func NewRfTokenRedisRepository(conf config.Config) *repositoryRedis[[]*model.Ref
 		return nil
 	}
 
+	newClient := redis.NewClient(opts)
+
+	err = newClient.Ping(context.Background()).Err()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
+
 	return &repositoryRedis[[]*model.RefreshToken]{
 		client: redis.NewClient(opts),
 		model:  &[]*model.RefreshToken{},
@@ -51,7 +65,7 @@ func (rep *repositoryRedis[model]) Set(ctx context.Context, key string, mod mode
 		return fmt.Errorf("repositoryRedis, CreateUpdate, MArshal: %w", err)
 	}
 
-	_, err = rep.client.Set(ctx, key, js, time.Minute*5).Result()
+	err = rep.client.Set(ctx, key, js, time.Minute*5).Err()
 	if err != nil {
 		return fmt.Errorf("repositoryRedis, CreateUpdate, Set: %w", err)
 	}
