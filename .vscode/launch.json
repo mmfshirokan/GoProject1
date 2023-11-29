@@ -14,8 +14,7 @@
                 "DATABASE":"postgresql",
                 "POSTGRES_DB_URI":"postgres://echopguser:pgpw4echo@localhost:5432/echodb?sslmode=disable",
                 "MONGO_DB_URI":"mongodb://localhost:6543",
-                "REDIS_USER_URI":"redis://localhost:6379?protocol=3",
-                "REDIS_RFT_URI":"redis://localhost:6380?protocol=3"
+                "REDIS_URI":"redis://localhost:6379/0?protocol=3",
             }
         }
     ]

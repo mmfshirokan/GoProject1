@@ -8,11 +8,10 @@ import (
 )
 
 type Config struct {
-	Database     string `env:"DATABASE" envDefault:"postgresql" validate:"oneof=postgresql mongodb"`
-	PostgresURI  string `env:"POSTGRES_DB_URI" validate:"uri"`
-	MongoURI     string `env:"MONGO_DB_URI" validate:"uri"`
-	RedisUserURI string `env:"REDIS_USER_URI" validate:"uri"`
-	RedisRftURI  string `env:"REDIS_RFT_URI" validate:"uri"`
+	Database    string `env:"DATABASE" envDefault:"postgresql" validate:"oneof=postgresql mongodb"`
+	PostgresURI string `env:"POSTGRES_DB_URI" validate:"uri"`
+	MongoURI    string `env:"MONGO_DB_URI" validate:"uri"`
+	RedisURI    string `env:"REDIS_URI" validate:"uri"`
 }
 
 func NewConfig() Config {

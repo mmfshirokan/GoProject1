@@ -63,7 +63,7 @@ func (rep *authRepositoryPostgres) Create(ctx context.Context, token *model.Refr
 }
 
 func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error) {
-	mod, err := rep.redisrep.Get(ctx, strconv.FormatInt(int64(userID), 10))
+	mod, err := rep.redisrep.Get(ctx, "token:"+strconv.FormatInt(int64(userID), 10))
 
 	if err != nil {
 		rows, err := rep.dbpool.Query(ctx, fmt.Sprint(
@@ -89,7 +89,7 @@ func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) 
 			retsult = append(retsult, item)
 		}
 
-		err = rep.redisrep.Set(ctx, strconv.FormatInt(int64(userID), 10), retsult)
+		err = rep.redisrep.Set(ctx, "token:"+strconv.FormatInt(int64(userID), 10), retsult)
 		if err != nil {
 			fmt.Fprint(os.Stderr, err)
 		}

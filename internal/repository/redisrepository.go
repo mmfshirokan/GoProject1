@@ -18,7 +18,7 @@ type repositoryRedis[generic model.User | []*model.RefreshToken] struct {
 }
 
 func NewUserRedisRepository(conf config.Config) *repositoryRedis[model.User] {
-	opts, err := redis.ParseURL(conf.RedisUserURI)
+	opts, err := redis.ParseURL(conf.RedisURI)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 
@@ -39,7 +39,7 @@ func NewUserRedisRepository(conf config.Config) *repositoryRedis[model.User] {
 }
 
 func NewRfTokenRedisRepository(conf config.Config) *repositoryRedis[[]*model.RefreshToken] {
-	opts, err := redis.ParseURL(conf.RedisRftURI)
+	opts, err := redis.ParseURL(conf.RedisURI)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 
