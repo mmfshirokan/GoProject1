@@ -172,7 +172,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	name, male, err := handling.user.GetTroughID(ctx, refreshToken.UserID)
+	usr, err := handling.user.GetTroughID(ctx, refreshToken.UserID)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
@@ -180,7 +180,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 	}
 
 	err = echoContext.JSON(http.StatusOK, echo.Map{
-		"token":   handling.token.CreateAuthToken(refreshToken.UserID, name, male),
+		"token":   handling.token.CreateAuthToken(refreshToken.UserID, usr.Name, usr.Male),
 		"refresh": rfTokens[0],
 	})
 	if err != nil {

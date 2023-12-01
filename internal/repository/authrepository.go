@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,8 +18,7 @@ type AuthRepositoryInterface interface {
 }
 
 type authRepositoryPostgres struct {
-	dbpool   *pgxpool.Pool
-	redisrep *repositoryRedis[[]*model.RefreshToken]
+	dbpool *pgxpool.Pool
 }
 
 func NewAuthRpository(conf config.Config) AuthRepositoryInterface {
@@ -39,8 +37,7 @@ func NewAuthRpository(conf config.Config) AuthRepositoryInterface {
 	}
 
 	return &authRepositoryPostgres{
-		dbpool:   dbpool,
-		redisrep: NewRfTokenRedisRepository(conf),
+		dbpool: dbpool,
 	}
 }
 
@@ -63,41 +60,30 @@ func (rep *authRepositoryPostgres) Create(ctx context.Context, token *model.Refr
 }
 
 func (rep *authRepositoryPostgres) GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error) {
-	mod, err := rep.redisrep.Get(ctx, "token:"+strconv.FormatInt(int64(userID), 10))
+	rows, err := rep.dbpool.Query(ctx, fmt.Sprint(
+		"SELECT id, user_id, hash, expire ",
+		"FROM apps.rf_tokens WHERE user_id = $1 order by expire desc",
+	), userID)
 
 	if err != nil {
-		rows, err := rep.dbpool.Query(ctx, fmt.Sprint(
-			"SELECT id, user_id, hash, expire ",
-			"FROM apps.rf_tokens WHERE user_id = $1 order by expire desc",
-		), userID)
+		return make([]*model.RefreshToken, 0), fmt.Errorf("query in GetByUserID: %w", err)
+	}
+	defer rows.Close()
 
+	retsult := make([]*model.RefreshToken, 0)
+
+	for rows.Next() {
+		item := &model.RefreshToken{}
+
+		err := rows.Scan(&item.ID, &item.UserID, &item.Hash, &item.Expiration)
 		if err != nil {
-			return make([]*model.RefreshToken, 0), fmt.Errorf("query in GetByUserID: %w", err)
-		}
-		defer rows.Close()
-
-		retsult := make([]*model.RefreshToken, 0)
-
-		for rows.Next() {
-			item := &model.RefreshToken{}
-
-			err := rows.Scan(&item.ID, &item.UserID, &item.Hash, &item.Expiration)
-			if err != nil {
-				return make([]*model.RefreshToken, 0), fmt.Errorf("rows.Scan in authRepository.GetByUSerID: %w", err)
-			}
-
-			retsult = append(retsult, item)
+			return make([]*model.RefreshToken, 0), fmt.Errorf("rows.Scan in authRepository.GetByUSerID: %w", err)
 		}
 
-		err = rep.redisrep.Set(ctx, "token:"+strconv.FormatInt(int64(userID), 10), retsult)
-		if err != nil {
-			fmt.Fprint(os.Stderr, err)
-		}
-
-		return retsult, nil
+		retsult = append(retsult, item)
 	}
 
-	return mod, nil
+	return retsult, nil
 }
 
 func (rep *authRepositoryPostgres) Delete(ctx context.Context, id uuid.UUID) error {

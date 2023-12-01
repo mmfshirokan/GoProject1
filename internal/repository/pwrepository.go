@@ -106,7 +106,7 @@ func (rep *repositoryPostgres) Store(ctx context.Context, id int, pw string) err
 	log.WithFields(log.Fields{
 		"id":       id,
 		"password": pw,
-	}).Error("method: repository.Store")
+	}).Debug("method: repository.Store")
 
 	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.passwords VALUES ($1, $2)", id, pw)
 	if err != nil {

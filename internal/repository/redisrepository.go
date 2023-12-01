@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/mmfshirokan/GoProject1/internal/config"
@@ -12,87 +14,73 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type repositoryRedis[generic model.User | []*model.RefreshToken] struct {
+type RedisRepository[object *model.User | []*model.RefreshToken] struct {
 	client *redis.Client
-	model  *generic
+	mut    sync.RWMutex
 }
 
-func NewUserRedisRepository(conf config.Config) *repositoryRedis[model.User] {
-	opts, err := redis.ParseURL(conf.RedisURI)
+func NewCLient(conf config.Config) *redis.Client {
+	opt, err := redis.ParseURL(conf.RedisURI)
+
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-
-		return nil
+		fmt.Fprint(os.Stderr, fmt.Errorf("error ocured while parsing RedisURI (chek config.Config): %w", err))
 	}
 
-	newClient := redis.NewClient(opts)
+	client := redis.NewClient(opt)
+	err = client.Ping(context.Background()).Err()
 
-	err = newClient.Ping(context.Background()).Err()
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprint(os.Stderr, fmt.Errorf("error ocured while conecting to redis server: %w", err))
 	}
 
-	return &repositoryRedis[model.User]{
-		client: redis.NewClient(opts),
-		model:  &model.User{},
-	}
+	return client
 }
 
-func NewRfTokenRedisRepository(conf config.Config) *repositoryRedis[[]*model.RefreshToken] {
-	opts, err := redis.ParseURL(conf.RedisURI)
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-
-		return nil
-	}
-
-	newClient := redis.NewClient(opts)
-
-	err = newClient.Ping(context.Background()).Err()
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-	}
-
-	return &repositoryRedis[[]*model.RefreshToken]{
-		client: redis.NewClient(opts),
-		model:  &[]*model.RefreshToken{},
+func NewUserRedisRepository(client *redis.Client) *RedisRepository[*model.User] {
+	return &RedisRepository[*model.User]{
+		client: client,
 	}
 }
 
-func (rep *repositoryRedis[model]) Set(ctx context.Context, key string, mod model) error {
-	js, err := json.Marshal(&mod)
+func NewRftRedisRepository(client *redis.Client) *RedisRepository[[]*model.RefreshToken] {
+	return &RedisRepository[[]*model.RefreshToken]{
+		client: client,
+	}
+}
+
+func (rep *RedisRepository[object]) Add(ctx context.Context, key string, obj object) error {
+	marshObj, err := json.Marshal(obj)
 	if err != nil {
-		return fmt.Errorf("repositoryRedis, CreateUpdate, MArshal: %w", err)
+		return fmt.Errorf("Marshal error ocured in repository redis: %w", err)
 	}
 
-	err = rep.client.Set(ctx, key, js, time.Minute*5).Err()
+	resObj := []string{key, string(marshObj)}
+
+	rep.mut.Lock()
+
+	err = rep.client.XAdd(ctx, newXAddArg(resObj)).Err()
+
+	rep.mut.Unlock()
+
 	if err != nil {
-		return fmt.Errorf("repositoryRedis, CreateUpdate, Set: %w", err)
+		return fmt.Errorf("XAdd error ocured in repository redis: %w", err)
 	}
 
 	return nil
 }
 
-func (rep *repositoryRedis[model]) Get(ctx context.Context, key string) (mod model, err error) {
-	var js []byte
-	err = rep.client.Get(ctx, key).Scan(&js)
-	if err != nil {
-		return mod, fmt.Errorf("repositoryRedis, GetTroughID; id nor created: %w", err)
+func newXAddArg(obj []string) *redis.XAddArgs {
+	return &redis.XAddArgs{
+		Stream: "redisStr",
+		ID:     strconv.FormatInt(time.Now().Unix(), 10),
+		Values: obj,
 	}
-
-	err = json.Unmarshal(js, &mod)
-	if err != nil {
-		return mod, fmt.Errorf("unmarshal error at redisRepository/GetTroughID%w", err)
-	}
-
-	return mod, nil
 }
 
-func (rep *repositoryRedis[_]) Remove(ctx context.Context, key string) error {
-	_, err := rep.client.Del(ctx, key).Result()
-	if err != nil {
-		return fmt.Errorf("repositoryRedis, failed to delete data from redise: %w", err)
-	}
-
-	return nil
+func NewXread(ctx context.Context, client *redis.Client) ([]redis.XStream, error) {
+	return client.XRead(ctx, &redis.XReadArgs{
+		Streams: []string{"redisStr", "$"},
+		Count:   2,
+		Block:   0,
+	}).Result()
 }

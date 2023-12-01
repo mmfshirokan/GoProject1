@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,12 +17,20 @@ import (
 )
 
 type Token struct {
-	repo repository.AuthRepositoryInterface
+	repo      repository.AuthRepositoryInterface
+	redis     *repository.RedisRepository[[]*model.RefreshToken]
+	sourceMap *repository.MapRepository[[]*model.RefreshToken]
 }
 
-func NewToken(rep repository.AuthRepositoryInterface) *Token {
+func NewToken(
+	rep repository.AuthRepositoryInterface,
+	redis *repository.RedisRepository[[]*model.RefreshToken],
+	sourceMap *repository.MapRepository[[]*model.RefreshToken],
+) *Token {
 	return &Token{
-		repo: rep,
+		repo:      rep,
+		redis:     redis,
+		sourceMap: sourceMap,
 	}
 }
 
@@ -98,5 +107,22 @@ func (tok *Token) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (tok *Token) GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error) {
-	return tok.repo.GetByUserID(ctx, userID)
+	key := "token:" + strconv.FormatInt(int64(userID), 10)
+	mod, err := tok.sourceMap.Get(ctx, key)
+
+	if err != nil {
+		mod, err = tok.repo.GetByUserID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = tok.redis.Add(ctx, key, mod)
+		if err != nil {
+			return mod, fmt.Errorf("redis XAdd error at repository redis: %w", err)
+		}
+	}
+
+	return mod, nil
+
+	//return
 }

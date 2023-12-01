@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mmfshirokan/GoProject1/internal/config"
@@ -15,7 +14,7 @@ import (
 )
 
 type Interface interface {
-	GetTroughID(ctx context.Context, id int) (string, bool, error)
+	GetTroughID(ctx context.Context, id int) (*model.User, error)
 	Update(ctx context.Context, id int, name string, male bool) error
 	Create(ctx context.Context, id int, name string, male bool) error
 	Delete(ctx context.Context, id int) error
@@ -27,8 +26,7 @@ type repositoryMongo struct {
 }
 
 type repositoryPostgres struct {
-	dbpool   *pgxpool.Pool
-	redisrep *repositoryRedis[model.User]
+	dbpool *pgxpool.Pool
 }
 
 func NewRepository(conf config.Config) Interface {
@@ -55,20 +53,19 @@ func NewRepository(conf config.Config) Interface {
 	}
 
 	return &repositoryPostgres{
-		dbpool:   dbpool,
-		redisrep: NewUserRedisRepository(conf),
+		dbpool: dbpool,
 	}
 }
 
-func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
-	var usr model.User
+func (rep *repositoryMongo) GetTroughID(ctx context.Context, id int) (*model.User, error) { //nolint:gocritic // it is unconvinient to name results because of decode
+	usr := &model.User{}
 
 	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&usr)
 	if err != nil {
-		return "", false, fmt.Errorf("findOne.Decode in repository.GetTroughID: %w", err)
+		return nil, fmt.Errorf("findOne.Decode in repository.GetTroughID: %w", err)
 	}
 
-	return usr.Name, usr.Male, nil
+	return usr, nil
 }
 
 func (rep *repositoryMongo) Create(ctx context.Context, id int, name string, male bool) error {
@@ -105,27 +102,14 @@ func (rep *repositoryMongo) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (string, bool, error) { //nolint:gocritic // it is unconvinient to name results because of decode
-	usr := model.User{}
-	usr, err := rep.redisrep.Get(ctx, "user:"+strconv.FormatInt(int64(id), 10))
-
+func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (*model.User, error) { //nolint:gocritic // it is unconvinient to name results because of decode
+	usr := &model.User{ID: id}
+	err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
 	if err != nil {
-		err := rep.dbpool.QueryRow(ctx, "SELECT name, male FROM apps.entity WHERE id = $1", id).Scan(&usr.Name, &usr.Male)
-		if err != nil {
-			return "", false, fmt.Errorf("queryRow in repository.GetTroughID: %w", err)
-		}
-
-		err = rep.redisrep.Set(ctx, "user:"+strconv.FormatInt(int64(id), 10), model.User{
-			ID:   id,
-			Name: usr.Name,
-			Male: usr.Male,
-		})
-		if err != nil {
-			return "", false, fmt.Errorf("%w", err)
-		}
+		return nil, fmt.Errorf("queryRow in repository.GetTroughID: %w", err)
 	}
 
-	return usr.Name, usr.Male, nil
+	return usr, nil
 }
 
 func (rep *repositoryPostgres) Create(ctx context.Context, id int, name string, male bool) error {
@@ -143,10 +127,10 @@ func (rep *repositoryPostgres) Update(ctx context.Context, id int, name string, 
 		return fmt.Errorf("exec in repository.Update: %w", err)
 	}
 
-	err = rep.redisrep.Remove(ctx, "user:"+strconv.FormatInt(int64(id), 10))
+	/*err = rep.redisrep.Remove(ctx, "user:"+strconv.FormatInt(int64(id), 10))
 	if err != nil {
 		return fmt.Errorf("%w", err)
-	}
+	}*/
 
 	return nil
 }
@@ -157,10 +141,10 @@ func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("exec in repository.Delete: %w", err)
 	}
 
-	err = rep.redisrep.Remove(ctx, "user:"+strconv.FormatInt(int64(id), 10))
+	/*err = rep.redisrep.Remove(ctx, "user:"+strconv.FormatInt(int64(id), 10))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "redis hash wasn't there %v", id)
-	}
+	}*/
 
 	return nil
 }

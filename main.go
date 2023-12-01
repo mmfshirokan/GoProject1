@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/mmfshirokan/GoProject1/internal/config"
+	"github.com/mmfshirokan/GoProject1/internal/consumer"
 	"github.com/mmfshirokan/GoProject1/internal/handlers"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
@@ -18,6 +20,7 @@ import (
 func main() {
 	conf := config.NewConfig()
 	val := validator.New(validator.WithRequiredStructEnabled())
+	ctx, _ := context.WithCancel(context.Background())
 
 	if err := val.Struct(&conf); err != nil {
 		fmt.Fprint(os.Stderr, "invalid config fild/s")
@@ -27,9 +30,25 @@ func main() {
 	pwRepo := repository.NewPasswordRepository(conf)
 	authRepo := repository.NewAuthRpository(conf)
 
-	usr := service.NewUser(repo)
+	redisClient := repository.NewCLient(conf)
+	redisUsr := repository.NewUserRedisRepository(redisClient)
+	srcUserMap := repository.NewUserMap()
+	redisTok := repository.NewRftRedisRepository(redisClient)
+	srcRftMap := repository.NewRftMap()
+
+	usr := service.NewUser(repo, redisUsr, srcUserMap)
 	pw := service.NewPassword(pwRepo)
-	tok := service.NewToken(authRepo)
+	tok := service.NewToken(authRepo, redisTok, srcRftMap)
+
+	cons := consumer.NewConsumer(
+		redisClient,
+		redisUsr,
+		redisTok,
+		srcUserMap,
+		srcRftMap,
+	)
+
+	go cons.Consume(ctx)
 
 	hand := handlers.NewHandler(usr, pw, tok)
 
