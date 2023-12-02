@@ -27,6 +27,15 @@ func NewHandler(usr *service.User, usrpw *service.Password, tok *service.Token) 
 	}
 }
 
+// GetUser godoc
+//
+// @Summary get user
+// @Description Gets stored user data
+// @Tags User Handlers
+// @Produce json
+// @Param token header string true "JWT token"
+// @Success 200 {object} model.User
+// @Router /users/auth/get [get]
 func (handling *Handler) GetUser(c echo.Context) error {
 	logInit()
 
@@ -64,6 +73,15 @@ func (handling *Handler) GetUser(c echo.Context) error {
 	return nil
 }
 
+// UpdateUser godoc
+//
+// @Summary update user
+// @Description Updates user data
+// @Tags User Handlers
+// @Accept json
+// @Param token header string true "JWT token"
+// @Success 1
+// @Router /users/auth/update [put]
 func (handling *Handler) UpdateUser(c echo.Context) error {
 	logInit()
 
@@ -92,6 +110,14 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 	return nil
 }
 
+// DeleteUser godoc
+//
+// @Summary delete user
+// @Description Deletes user data
+// @Tags User Handlers
+// @Param token header string true "JWT token"
+// @Success 1
+// @Router /users/auth/delete [delete]
 func (handling *Handler) DeleteUser(c echo.Context) error {
 	logInit()
 

@@ -123,6 +123,4 @@ func (tok *Token) GetByUserID(ctx context.Context, userID int) ([]*model.Refresh
 	}
 
 	return mod, nil
-
-	//return
 }

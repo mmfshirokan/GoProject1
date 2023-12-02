@@ -10,6 +10,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Signup godoc
+//
+// @Summary signup
+// @Description Adding new user to the database
+// @Tags User Authentication
+// @Accept json
+// @Param usr body model.User true "User Data"
+// @Success 1
+// @Router /users/signup [post]
 func (handling *Handler) SignUp(echoContext echo.Context) error {
 	logInit()
 
@@ -50,6 +59,16 @@ func (handling *Handler) SignUp(echoContext echo.Context) error {
 	return nil
 }
 
+// Signin godoc
+//
+// @Summary signin
+// @Description Comparing user input password with database password and giving him access to other handlers
+// @Tags User Authentication
+// @Accept json
+// @Produce json
+// @Param usr body model.User true "Only Password and ID required"
+// @Success 200 {object} map[string]interface{}
+// @Router /users/signin [put]
 func (handling *Handler) SignIn(echoContext echo.Context) error {
 	logInit()
 
@@ -113,6 +132,16 @@ func (handling *Handler) SignIn(echoContext echo.Context) error {
 	return nil
 }
 
+// Refresh godoc
+//
+// @Summary refresh
+// @Description Refreshes token paire
+// @Tags User Authentication
+// @Accept json
+// @Produce json
+// @Param refreshToken body model.RefreshToken true "Refresh Token Data"
+// @Success 200 {object} map[string]interface{}
+// @Router /users/refresh [put]
 func (handling *Handler) Refresh(echoContext echo.Context) error {
 	logInit()
 

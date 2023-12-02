@@ -12,6 +12,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// UploadImage godoc
+//
+// @Summary upload image
+// @Description Uploads user image
+// @Tags User ImageHandlers
+// @Accept json
+// @Param img body model.Image true "Path to image and image name"
+// @Success 1
+// @Router /users/auth/uploadImage [put]
 func (handling *Handler) UploadImage(c echo.Context) error {
 	img, err := newImage(c)
 	if err != nil {
@@ -43,6 +52,15 @@ func (handling *Handler) UploadImage(c echo.Context) error {
 	return nil
 }
 
+// DownloadImage godoc
+//
+// @Summary download image
+// @Description Downloads user image
+// @Tags User ImageHandlers
+// @Accept json
+// @Param img body model.Image true "Path where to download image and image name"
+// @Success 1
+// @Router /users/auth/downloadImage [put]
 func (handling *Handler) DownloadImage(c echo.Context) error {
 	img, err := newImage(c)
 	if err != nil {

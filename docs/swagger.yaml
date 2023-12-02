@@ -1,0 +1,205 @@
+basePath: /users
+definitions:
+  model.Image:
+    properties:
+      imgname:
+        type: string
+      path:
+        type: string
+      serverImgPath:
+        type: string
+    type: object
+  model.RefreshToken:
+    properties:
+      expiration:
+        type: string
+      hash:
+        description: validate:"sha256"
+        type: string
+      id:
+        type: string
+      userId:
+        maximum: 1000000000
+        type: integer
+    type: object
+  model.User:
+    properties:
+      id:
+        maximum: 1000000000
+        type: integer
+      male:
+        type: boolean
+      name:
+        maxLength: 40
+        type: string
+      password:
+        maxLength: 40
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact: {}
+  description: This is a server for using JWT, Swagger, and exetra with Echo.
+  title: Echo Serevr
+  version: "1.0"
+paths:
+  /users/auth/delete:
+    delete:
+      description: Deletes user data
+      parameters:
+      - description: JWT token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "1":
+          description: ""
+      summary: delete user
+      tags:
+      - User Handlers
+  /users/auth/downloadImage:
+    put:
+      consumes:
+      - application/json
+      description: Downloads user image
+      parameters:
+      - description: Path where to download image and image name
+        in: body
+        name: img
+        required: true
+        schema:
+          $ref: '#/definitions/model.Image'
+      responses:
+        "1":
+          description: ""
+      summary: download image
+      tags:
+      - User ImageHandlers
+  /users/auth/get:
+    get:
+      description: Gets stored user data
+      parameters:
+      - description: JWT token
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+      summary: get user
+      tags:
+      - User Handlers
+  /users/auth/update:
+    put:
+      consumes:
+      - application/json
+      description: Updates user data
+      parameters:
+      - description: JWT token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "1":
+          description: ""
+      summary: update user
+      tags:
+      - User Handlers
+  /users/auth/uploadImage:
+    put:
+      consumes:
+      - application/json
+      description: Uploads user image
+      parameters:
+      - description: Path to image and image name
+        in: body
+        name: img
+        required: true
+        schema:
+          $ref: '#/definitions/model.Image'
+      responses:
+        "1":
+          description: ""
+      summary: upload image
+      tags:
+      - User ImageHandlers
+  /users/refresh:
+    put:
+      consumes:
+      - application/json
+      description: Refreshes token paire
+      parameters:
+      - description: Refresh Token Data
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: refresh
+      tags:
+      - User Authentication
+  /users/signin:
+    put:
+      consumes:
+      - application/json
+      description: Comparing user input password with database password and giving
+        him access to other handlers
+      parameters:
+      - description: Only Password and ID required
+        in: body
+        name: usr
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: signin
+      tags:
+      - User Authentication
+  /users/signup:
+    post:
+      consumes:
+      - application/json
+      description: Adding new user to the database
+      parameters:
+      - description: User Data
+        in: body
+        name: usr
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      responses:
+        "1":
+          description: ""
+      summary: signup
+      tags:
+      - User Authentication
+schemes:
+- http
+securityDefinitions:
+  JWT:
+    in: header
+    name: token
+    type: apiKey
+swagger: "2.0"

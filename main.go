@@ -9,14 +9,27 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	_ "github.com/mmfshirokan/GoProject1/docs"
 	"github.com/mmfshirokan/GoProject1/internal/config"
 	"github.com/mmfshirokan/GoProject1/internal/consumer"
 	"github.com/mmfshirokan/GoProject1/internal/handlers"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/service"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
+// @title Echo Serevr
+// @version 1.0
+// @description This is a server for using JWT, Swagger, and exetra with Echo.
+
+// @securityDefinitions.apiKey JWT
+// @in       header
+// @name      token
+
+// @host localhost:8081
+// @BasePath /users
+// @schemes http
 func main() {
 	conf := config.NewConfig()
 	val := validator.New(validator.WithRequiredStructEnabled())
@@ -56,6 +69,7 @@ func main() {
 	echoServ.POST("/users/signup", hand.SignUp)
 	echoServ.PUT("/users/signin", hand.SignIn)
 	echoServ.PUT("/users/refresh", hand.Refresh)
+	echoServ.GET("/swagger/*", echoSwagger.WrapHandler)
 	group := echoServ.Group("/users/auth")
 
 	echoConf := echojwt.Config{

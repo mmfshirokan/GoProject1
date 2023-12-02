@@ -1,0 +1,310 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a server for using JWT, Swagger, and exetra with Echo.",
+        "title": "Echo Serevr",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/users",
+    "paths": {
+        "/users/auth/delete": {
+            "delete": {
+                "description": "Deletes user data",
+                "tags": [
+                    "User Handlers"
+                ],
+                "summary": "delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "1": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/auth/downloadImage": {
+            "put": {
+                "description": "Downloads user image",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User ImageHandlers"
+                ],
+                "summary": "download image",
+                "parameters": [
+                    {
+                        "description": "Path where to download image and image name",
+                        "name": "img",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Image"
+                        }
+                    }
+                ],
+                "responses": {
+                    "1": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/auth/get": {
+            "get": {
+                "description": "Gets stored user data",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Handlers"
+                ],
+                "summary": "get user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.User"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/auth/update": {
+            "put": {
+                "description": "Updates user data",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Handlers"
+                ],
+                "summary": "update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "1": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/auth/uploadImage": {
+            "put": {
+                "description": "Uploads user image",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User ImageHandlers"
+                ],
+                "summary": "upload image",
+                "parameters": [
+                    {
+                        "description": "Path to image and image name",
+                        "name": "img",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Image"
+                        }
+                    }
+                ],
+                "responses": {
+                    "1": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/refresh": {
+            "put": {
+                "description": "Refreshes token paire",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Authentication"
+                ],
+                "summary": "refresh",
+                "parameters": [
+                    {
+                        "description": "Refresh Token Data",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RefreshToken"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/users/signin": {
+            "put": {
+                "description": "Comparing user input password with database password and giving him access to other handlers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Authentication"
+                ],
+                "summary": "signin",
+                "parameters": [
+                    {
+                        "description": "Only Password and ID required",
+                        "name": "usr",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/users/signup": {
+            "post": {
+                "description": "Adding new user to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Authentication"
+                ],
+                "summary": "signup",
+                "parameters": [
+                    {
+                        "description": "User Data",
+                        "name": "usr",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "1": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.Image": {
+            "type": "object",
+            "properties": {
+                "imgname": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "serverImgPath": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RefreshToken": {
+            "type": "object",
+            "properties": {
+                "expiration": {
+                    "type": "string"
+                },
+                "hash": {
+                    "description": "validate:\"sha256\"",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer",
+                    "maximum": 1000000000
+                }
+            }
+        },
+        "model.User": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "maximum": 1000000000
+                },
+                "male": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 40
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 40
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "JWT": {
+            "type": "apiKey",
+            "name": "token",
+            "in": "header"
+        }
+    }
+}
