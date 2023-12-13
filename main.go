@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
+	//"fmt"
+	//"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	_ "github.com/mmfshirokan/GoProject1/docs"
@@ -16,7 +17,10 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/service"
+	log "github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // @title Echo Serevr
@@ -36,11 +40,40 @@ func main() {
 	ctx, _ := context.WithCancel(context.Background())
 
 	if err := val.Struct(&conf); err != nil {
-		fmt.Fprint(os.Stderr, "invalid config fild/s")
+		log.Error("invalid config fild/s")
 	}
 
-	repo := repository.NewRepository(conf)
-	pwRepo := repository.NewPasswordRepository(conf)
+	var (
+		repo   repository.Interface
+		pwRepo repository.PwRepositoryInterface
+	)
+
+	if conf.Database == "mongodb" {
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoURI))
+		if err != nil {
+			log.Error("invalid config fild/s %w", err)
+		}
+
+		repo = repository.NewMongoRepository(client.Database("users").Collection("entity"))
+		pwRepo = repository.NewMongoPasswordRepository(client.Database("users").Collection("passwords"))
+
+	} else if conf.Database == "postgresql" {
+
+		dbpool, err := pgxpool.New(ctx, conf.PostgresURI)
+		if err != nil {
+			dbpool.Close()
+			log.Error("can't connect to the pgxpool: %w", err)
+		}
+
+		repo = repository.NewPostgresRepository(dbpool)
+		pwRepo = repository.NewPostgresPasswordRepository(dbpool)
+
+	} else {
+		log.Error("unexpected error occurred (wrong config)")
+		repo = nil
+		pwRepo = nil
+	}
+
 	authRepo := repository.NewAuthRpository(conf)
 
 	redisClient := repository.NewCLient(conf)

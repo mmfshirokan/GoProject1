@@ -101,7 +101,11 @@ func (handling *Handler) UpdateUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if err := handling.user.Update(ctx, claims.ID, claims.Name, claims.Male); err != nil {
+	if err := handling.user.Update(ctx, model.User{
+		ID:   claims.ID,
+		Name: claims.Name,
+		Male: claims.Male,
+	}); err != nil {
 		log.Error(fmt.Errorf("handling.user.Update: %w", err))
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

@@ -24,6 +24,8 @@ func NewCLient(conf config.Config) *redis.Client {
 
 	if err != nil {
 		fmt.Fprint(os.Stderr, fmt.Errorf("error ocured while parsing RedisURI (chek config.Config): %w", err))
+
+		return nil
 	}
 
 	client := redis.NewClient(opt)
@@ -31,6 +33,8 @@ func NewCLient(conf config.Config) *redis.Client {
 
 	if err != nil {
 		fmt.Fprint(os.Stderr, fmt.Errorf("error ocured while conecting to redis server: %w", err))
+
+		return nil
 	}
 
 	return client
@@ -51,7 +55,7 @@ func NewRftRedisRepository(client *redis.Client) *RedisRepository[[]*model.Refre
 func (rep *RedisRepository[object]) Add(ctx context.Context, key string, obj object) error {
 	marshObj, err := json.Marshal(obj)
 	if err != nil {
-		return fmt.Errorf("Marshal error ocured in repository redis: %w", err)
+		return fmt.Errorf("marshal error ocured in repository redis: %w", err)
 	}
 
 	resObj := []string{key, string(marshObj)}

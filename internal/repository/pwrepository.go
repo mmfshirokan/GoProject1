@@ -6,11 +6,9 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mmfshirokan/GoProject1/internal/config"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type PwRepositoryInterface interface {
@@ -19,30 +17,15 @@ type PwRepositoryInterface interface {
 	DeletePassword(ctx context.Context, id int) error
 }
 
-func NewPasswordRepository(conf config.Config) PwRepositoryInterface {
-	ctx := context.Background()
-
-	if conf.Database == "mongodb" {
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(conf.MongoURI))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to connect client: %v\n", err)
-		}
-
-		collection := client.Database("users").Collection("passwords")
-
-		return &repositoryMongo{
-			client:     client,
-			collection: collection,
-		}
-	}
-
-	dbpool, err := pgxpool.New(ctx, conf.PostgresURI)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
-	}
-
+func NewPostgresPasswordRepository(dbpool *pgxpool.Pool) PwRepositoryInterface {
 	return &repositoryPostgres{
 		dbpool: dbpool,
+	}
+}
+
+func NewMongoPasswordRepository(collection *mongo.Collection) PwRepositoryInterface {
+	return &repositoryMongo{
+		collection: collection,
 	}
 }
 

@@ -42,7 +42,7 @@ func (handling *Handler) SignUp(echoContext echo.Context) error {
 
 	ctx := echoContext.Request().Context()
 
-	err = handling.user.Create(ctx, usr.ID, usr.Name, usr.Male)
+	err = handling.user.Create(ctx, usr)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 

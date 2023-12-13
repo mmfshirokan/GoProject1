@@ -46,14 +46,14 @@ func (serv *User) GetTroughID(ctx context.Context, id int) (usr *model.User, err
 	return usr, nil
 }
 
-func (serv *User) Create(ctx context.Context, id int, name string, male bool) error {
-	return serv.rep.Create(ctx, id, name, male)
+func (serv *User) Create(ctx context.Context, usr model.User) error {
+	return serv.rep.Create(ctx, usr)
 }
 
-func (serv *User) Update(ctx context.Context, id int, name string, male bool) error {
-	serv.sourceMap.Remove("user:" + strconv.FormatInt(int64(id), 10)) // TODO change remove to xadd
+func (serv *User) Update(ctx context.Context, usr model.User) error {
+	serv.sourceMap.Remove("user:" + strconv.FormatInt(int64(usr.ID), 10)) // TODO change remove to xadd
 
-	return serv.rep.Update(ctx, id, name, male)
+	return serv.rep.Update(ctx, usr)
 }
 
 func (serv *User) Delete(ctx context.Context, id int) error {
