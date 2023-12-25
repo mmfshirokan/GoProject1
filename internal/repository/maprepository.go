@@ -13,17 +13,13 @@ type MapRepository[value *model.User | []*model.RefreshToken] struct {
 	mut    sync.RWMutex
 }
 
-func NewUserMap() *MapRepository[*model.User] {
-	source := make(map[string]*model.User)
-
+func NewUserMap(source map[string]*model.User) *MapRepository[*model.User] { // changed: before map was created in func; now map is created outside the func
 	return &MapRepository[*model.User]{
 		source: source,
 	}
 }
 
-func NewRftMap() *MapRepository[[]*model.RefreshToken] {
-	source := make(map[string][]*model.RefreshToken)
-
+func NewRftMap(source map[string][]*model.RefreshToken) *MapRepository[[]*model.RefreshToken] { // changed: before map was created in func; now map is created outside the func
 	return &MapRepository[[]*model.RefreshToken]{
 		source: source,
 	}

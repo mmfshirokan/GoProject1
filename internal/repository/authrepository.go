@@ -3,11 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"os"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mmfshirokan/GoProject1/internal/config"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 )
 
@@ -21,27 +20,18 @@ type authRepositoryPostgres struct {
 	dbpool *pgxpool.Pool
 }
 
-func NewAuthRpository(conf config.Config) AuthRepositoryInterface {
-	if conf.Database == "mongodb" { //nolint:goconst //unnecessary const
-		return nil
-	}
-
-	ctx := context.Background()
-
-	dbpool, err := pgxpool.New(ctx, conf.PostgresURI)
-	if err != nil {
-		dbpool.Close()
-		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
-
-		return nil
-	}
-
+func NewAuthRpository(dbpool *pgxpool.Pool) AuthRepositoryInterface {
 	return &authRepositoryPostgres{
 		dbpool: dbpool,
 	}
 }
 
 func (rep *authRepositoryPostgres) Create(ctx context.Context, token *model.RefreshToken) error {
+	val := validator.New(validator.WithRequiredStructEnabled())
+	if err := val.Struct(token); err != nil {
+		return err
+	}
+
 	const maxNumberOfTokens = 5
 
 	reshreshTokens, _ := rep.GetByUserID(ctx, token.UserID)

@@ -73,18 +73,18 @@ func (rep *RedisRepository[object]) Add(ctx context.Context, key string, obj obj
 	return nil
 }
 
-func newXAddArg(obj []string) *redis.XAddArgs {
-	return &redis.XAddArgs{
-		Stream: "redisStr",
-		ID:     strconv.FormatInt(time.Now().Unix(), 10),
-		Values: obj,
-	}
-}
-
 func NewXread(ctx context.Context, client *redis.Client) ([]redis.XStream, error) {
 	return client.XRead(ctx, &redis.XReadArgs{
 		Streams: []string{"redisStr", "$"},
 		Count:   2,
 		Block:   0,
 	}).Result()
+}
+
+func newXAddArg(obj []string) *redis.XAddArgs {
+	return &redis.XAddArgs{
+		Stream: "redisStr",
+		ID:     strconv.FormatInt(time.Now().UnixMilli(), 10),
+		Values: obj,
+	}
 }

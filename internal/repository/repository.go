@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -93,6 +94,10 @@ func (rep *repositoryPostgres) GetTroughID(ctx context.Context, id int) (*model.
 }
 
 func (rep *repositoryPostgres) Create(ctx context.Context, usr model.User) error {
+	if err := validate(usr); err != nil {
+		return err
+	}
+
 	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.entity VALUES ($1, $2, $3)", usr.ID, usr.Name, usr.Male)
 	if err != nil {
 		return fmt.Errorf("exec in repository.Create: %w", err)
@@ -102,6 +107,10 @@ func (rep *repositoryPostgres) Create(ctx context.Context, usr model.User) error
 }
 
 func (rep *repositoryPostgres) Update(ctx context.Context, usr model.User) error {
+	if err := validate(usr); err != nil {
+		return err
+	}
+
 	_, err := rep.dbpool.Exec(ctx, "UPDATE apps.entity SET name = $1, male = $2 WHERE id = $3", usr.Name, usr.Male, usr.ID)
 	if err != nil {
 		return fmt.Errorf("exec in repository.Update: %w", err)
@@ -114,6 +123,15 @@ func (rep *repositoryPostgres) Delete(ctx context.Context, id int) error {
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.entity WHERE id = $1", id)
 	if err != nil {
 		return fmt.Errorf("exec in repository.Delete: %w", err)
+	}
+
+	return nil
+}
+
+func validate(usr model.User) error {
+	val := validator.New(validator.WithRequiredStructEnabled())
+	if err := val.Struct(&usr); err != nil {
+		return err
 	}
 
 	return nil

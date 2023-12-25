@@ -49,7 +49,7 @@ func (handling *Handler) SignUp(echoContext echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	err = handling.password.Store(ctx, usr.ID, usr.Password)
+	err = handling.password.Store(ctx, usr)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
@@ -88,7 +88,7 @@ func (handling *Handler) SignIn(echoContext echo.Context) error {
 
 	ctx := echoContext.Request().Context()
 
-	validPassword, err := handling.password.Compare(ctx, usr.ID, usr.Password)
+	validPassword, err := handling.password.Compare(ctx, usr)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 

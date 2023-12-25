@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/mmfshirokan/GoProject1/internal/model"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PwRepositoryInterface interface {
-	Store(ctx context.Context, id int, pw string) error
-	Compare(ctx context.Context, id int, pw string) (bool, error)
+	Store(ctx context.Context, usr model.User) error
+	Compare(ctx context.Context, usr model.User) (bool, error)
 	DeletePassword(ctx context.Context, id int) error
 }
 
@@ -29,17 +31,17 @@ func NewMongoPasswordRepository(collection *mongo.Collection) PwRepositoryInterf
 	}
 }
 
-func (rep *repositoryMongo) Store(ctx context.Context, id int, pw string) error {
+func (rep *repositoryMongo) Store(ctx context.Context, usr model.User) error {
 	logInit()
 
 	log.WithFields(log.Fields{
-		"id":       id,
-		"password": pw,
+		"id":       usr.ID,
+		"password": usr.Password,
 	}).Debug("method: repository.Store")
 
 	_, err := rep.collection.InsertOne(ctx, bson.D{
-		{Key: "_id", Value: id},
-		{Key: "password", Value: pw},
+		{Key: "_id", Value: usr.ID},
+		{Key: "password", Value: usr.Password},
 	})
 	if err != nil {
 		return fmt.Errorf("InsertOne in repository.Store%w", err)
@@ -48,22 +50,22 @@ func (rep *repositoryMongo) Store(ctx context.Context, id int, pw string) error 
 	return nil
 }
 
-func (rep *repositoryMongo) Compare(ctx context.Context, id int, pw string) (bool, error) {
+func (rep *repositoryMongo) Compare(ctx context.Context, usr model.User) (bool, error) {
 	logInit()
 
 	log.WithFields(log.Fields{
-		"id":       id,
-		"password": pw,
+		"id":       usr.ID,
+		"password": usr.Password,
 	}).Debug("method: repository.Compare")
 
 	var dbpw string
 
-	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&dbpw)
+	err := rep.collection.FindOne(ctx, bson.D{{Key: "_id", Value: usr.ID}}).Decode(&dbpw)
 	if err != nil {
 		return false, fmt.Errorf("findOne.Decode in repository.Compare: %w", err)
 	}
 
-	if dbpw == pw {
+	if dbpw == usr.Password {
 		return true, nil
 	}
 
@@ -83,38 +85,45 @@ func (rep *repositoryMongo) DeletePassword(ctx context.Context, id int) error {
 	return nil
 }
 
-func (rep *repositoryPostgres) Store(ctx context.Context, id int, pw string) error {
+func (rep *repositoryPostgres) Store(ctx context.Context, usr model.User) error {
 	logInit()
 
 	log.WithFields(log.Fields{
-		"id":       id,
-		"password": pw,
+		"id":       usr.ID,
+		"password": usr.Password,
 	}).Debug("method: repository.Store")
 
-	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.passwords VALUES ($1, $2)", id, pw)
+	val := validator.New(validator.WithRequiredStructEnabled())
+	if err := val.Struct(&usr); err != nil {
+		log.Error("validation error ocured:", err)
+		return err
+	}
+
+	_, err := rep.dbpool.Exec(ctx, "INSERT INTO apps.passwords VALUES ($1, $2)", usr.ID, usr.Password)
 	if err != nil {
-		return fmt.Errorf("exec in repository.Store%w", err)
+		log.Error("exec in repository.Store: %w", err)
+		return err
 	}
 
 	return nil
 }
 
-func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (bool, error) {
+func (rep *repositoryPostgres) Compare(ctx context.Context, usr model.User) (bool, error) {
 	logInit()
 
 	log.WithFields(log.Fields{
-		"id":       id,
-		"password": pw,
+		"id":       usr.ID,
+		"password": usr.Password,
 	}).Debug("method: repository.Compare")
 
 	var dbpw string
 
-	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM apps.passwords WHERE id = $1", id).Scan(&dbpw)
+	err := rep.dbpool.QueryRow(ctx, "SELECT password FROM apps.passwords WHERE id = $1", usr.ID).Scan(&dbpw)
 	if err != nil {
 		return false, fmt.Errorf("queryRow.Scan in repository.Compare: %w", err)
 	}
 
-	if dbpw == pw {
+	if dbpw == usr.Password {
 		return true, nil
 	}
 
@@ -124,7 +133,7 @@ func (rep *repositoryPostgres) Compare(ctx context.Context, id int, pw string) (
 func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error {
 	logInit()
 
-	log.WithField("id", id).Error("method: repository.DeletePassword")
+	log.WithField("id", id).Debug("method: repository.DeletePassword")
 
 	_, err := rep.dbpool.Exec(ctx, "DELETE FROM apps.passwords WHERE id = $1", id)
 	if err != nil {

@@ -44,8 +44,9 @@ func main() {
 	}
 
 	var (
-		repo   repository.Interface
-		pwRepo repository.PwRepositoryInterface
+		repo     repository.Interface
+		pwRepo   repository.PwRepositoryInterface
+		authRepo repository.AuthRepositoryInterface
 	)
 
 	if conf.Database == "mongodb" {
@@ -67,31 +68,35 @@ func main() {
 
 		repo = repository.NewPostgresRepository(dbpool)
 		pwRepo = repository.NewPostgresPasswordRepository(dbpool)
+		authRepo = repository.NewAuthRpository(dbpool)
 
 	} else {
-		log.Error("unexpected error occurred (wrong config)")
+		log.Fatal("unexpected error occurred (wrong config)")
 		repo = nil
 		pwRepo = nil
+		authRepo = nil
 	}
-
-	authRepo := repository.NewAuthRpository(conf)
 
 	redisClient := repository.NewCLient(conf)
 	redisUsr := repository.NewUserRedisRepository(redisClient)
-	srcUserMap := repository.NewUserMap()
 	redisTok := repository.NewRftRedisRepository(redisClient)
-	srcRftMap := repository.NewRftMap()
 
-	usr := service.NewUser(repo, redisUsr, srcUserMap)
+	userMap := make(map[string]*model.User)
+	rftMap := make(map[string][]*model.RefreshToken)
+
+	userMapConn := repository.NewUserMap(userMap)
+	rftMapConn := repository.NewRftMap(rftMap)
+
+	usr := service.NewUser(repo, redisUsr, userMapConn)
 	pw := service.NewPassword(pwRepo)
-	tok := service.NewToken(authRepo, redisTok, srcRftMap)
+	tok := service.NewToken(authRepo, redisTok, rftMapConn)
 
 	cons := consumer.NewConsumer(
 		redisClient,
 		redisUsr,
 		redisTok,
-		srcUserMap,
-		srcRftMap,
+		userMapConn,
+		rftMapConn,
 	)
 
 	go cons.Consume(ctx)

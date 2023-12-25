@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "test",
-            "program": "/home/andreishyrakanau/projects/project1/GoProject1/internal/repository/",
+            "program": "/home/andreishyrakanau/projects/project1/GoProject1/internal/repository_test/",
             "env": {
                 "DATABASE":"postgresql",
                 "POSTGRES_DB_URI":"postgres://echopguser:pgpw4echo@localhost:6462/echodb?sslmode=disable",
@@ -17,8 +17,6 @@
                 "REDIS_URI":"redis://localhost:6379/0?protocol=3",
             },
             "args": [
-                "-test.run",
-                "Create"
             ]
         },
         {
