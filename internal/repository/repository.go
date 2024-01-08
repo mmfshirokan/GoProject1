@@ -11,7 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Interface interface {
+//go:generate mockery --dir . --all --output ../service/mocks --case --outpkg service_test --with-expecter
+
+type RepositoryInterface interface {
 	GetTroughID(ctx context.Context, id int) (*model.User, error)
 	Update(ctx context.Context, usr model.User) error
 	Create(ctx context.Context, usr model.User) error
@@ -26,13 +28,13 @@ type repositoryPostgres struct {
 	dbpool *pgxpool.Pool
 }
 
-func NewPostgresRepository(dbpool *pgxpool.Pool) Interface {
+func NewPostgresRepository(dbpool *pgxpool.Pool) RepositoryInterface {
 	return &repositoryPostgres{
 		dbpool: dbpool,
 	}
 }
 
-func NewMongoRepository(collection *mongo.Collection) Interface {
+func NewMongoRepository(collection *mongo.Collection) RepositoryInterface {
 	return &repositoryMongo{
 		collection: collection,
 	}

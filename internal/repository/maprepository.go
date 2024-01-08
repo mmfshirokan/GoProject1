@@ -8,18 +8,24 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/model"
 )
 
+type MapRepositoryInterface[value *model.User | []*model.RefreshToken] interface {
+	Set(ctx context.Context, key string, val value)
+	Get(ctx context.Context, key string) (value, error)
+	Remove(key string)
+}
+
 type MapRepository[value *model.User | []*model.RefreshToken] struct {
 	source map[string]value
 	mut    sync.RWMutex
 }
 
-func NewUserMap(source map[string]*model.User) *MapRepository[*model.User] { // changed: before map was created in func; now map is created outside the func
+func NewUserMap(source map[string]*model.User) MapRepositoryInterface[*model.User] { // changed: before map was created in func; now map is created outside the func
 	return &MapRepository[*model.User]{
 		source: source,
 	}
 }
 
-func NewRftMap(source map[string][]*model.RefreshToken) *MapRepository[[]*model.RefreshToken] { // changed: before map was created in func; now map is created outside the func
+func NewRftMap(source map[string][]*model.RefreshToken) MapRepositoryInterface[[]*model.RefreshToken] { // changed: before map was created in func; now map is created outside the func
 	return &MapRepository[[]*model.RefreshToken]{
 		source: source,
 	}

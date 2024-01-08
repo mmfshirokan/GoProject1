@@ -9,17 +9,26 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
 
+//go:generate mockery --dir . --all --output ../handlers/mocks/ --with-expecter
+
+type UserInterface interface {
+	GetTroughID(ctx context.Context, id int) (usr *model.User, err error)
+	Create(ctx context.Context, usr model.User) error
+	Update(ctx context.Context, usr model.User) error
+	Delete(ctx context.Context, id int) error
+}
+
 type User struct {
-	rep       repository.Interface
-	redis     *repository.RedisRepository[*model.User]
-	sourceMap *repository.MapRepository[*model.User]
+	rep       repository.RepositoryInterface
+	redis     repository.RedisRepositoryInterface[*model.User]
+	sourceMap repository.MapRepositoryInterface[*model.User]
 }
 
 func NewUser(
-	repo repository.Interface,
-	redis *repository.RedisRepository[*model.User],
-	sourceMap *repository.MapRepository[*model.User],
-) *User {
+	repo repository.RepositoryInterface,
+	redis repository.RedisRepositoryInterface[*model.User],
+	sourceMap repository.MapRepositoryInterface[*model.User],
+) UserInterface {
 	return &User{
 		rep:       repo,
 		redis:     redis,

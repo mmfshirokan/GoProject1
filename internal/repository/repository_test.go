@@ -1,4 +1,4 @@
-package repository_test
+package repository
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mmfshirokan/GoProject1/internal/config"
 	"github.com/mmfshirokan/GoProject1/internal/model"
-	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/redis/go-redis/v9"
@@ -22,7 +21,7 @@ import (
 	//"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var conn repository.Interface
+var conn RepositoryInterface
 
 func TestMain(m *testing.M) {
 	ctx, _ := context.WithCancel(context.Background())
@@ -91,7 +90,7 @@ func TestMain(m *testing.M) {
 
 	var client *redis.Client
 	if err = pool.Retry(func() error {
-		client = repository.NewCLient(redisConf)
+		client = NewCLient(redisConf)
 		return client.Ping(ctx).Err()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
@@ -118,17 +117,17 @@ func TestMain(m *testing.M) {
 	log.Info(fmt.Printf("out: %s%s", outb.String(), errb.String()))
 
 	pool.MaxWait = 120 * time.Second
-	conn = repository.NewPostgresRepository(dbpool)
-	pwConn = repository.NewPostgresPasswordRepository(dbpool)
-	authConn = repository.NewAuthRpository(dbpool)
+	conn = NewPostgresRepository(dbpool)
+	pwConn = NewPostgresPasswordRepository(dbpool)
+	authConn = NewAuthRpository(dbpool)
 
-	redisUsrConn = repository.NewUserRedisRepository(client)
-	redisRftConn = repository.NewRftRedisRepository(client)
+	redisUsrConn = NewUserRedisRepository(client)
+	redisRftConn = NewRftRedisRepository(client)
 
 	mapUsr = make(map[string]*model.User)
 	mapRft = make(map[string][]*model.RefreshToken)
-	mapUsrConn = repository.NewUserMap(mapUsr)
-	mapRftConn = repository.NewRftMap(mapRft)
+	mapUsrConn = NewUserMap(mapUsr)
+	mapRftConn = NewRftMap(mapRft)
 
 	code := m.Run()
 

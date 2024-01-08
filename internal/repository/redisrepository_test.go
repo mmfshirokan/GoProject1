@@ -1,4 +1,4 @@
-package repository_test
+package repository
 
 import (
 	"context"
@@ -8,17 +8,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mmfshirokan/GoProject1/internal/model"
-	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	rfTokenExpirationTime time.Time
-	redisUsrConn          *repository.RedisRepository[*model.User]
-	redisRftConn          *repository.RedisRepository[[]*model.RefreshToken]
+	redisUsrConn          RedisRepositoryInterface[*model.User]
+	redisRftConn          RedisRepositoryInterface[[]*model.RefreshToken]
 )
 
-func TestSet(t *testing.T) {
+func TestAdd(t *testing.T) {
 	type testCase[obj *model.User | []*model.RefreshToken] struct {
 		name     string
 		inputKey string
@@ -87,6 +86,7 @@ func TestSet(t *testing.T) {
 
 	for _, test := range usrTestTable {
 		err := redisUsrConn.Add(context.Background(), test.inputKey, test.inputObl)
+		time.Sleep(time.Millisecond)
 		if test.hasError {
 			assert.Error(t, err, test.name)
 		} else {
@@ -96,11 +96,12 @@ func TestSet(t *testing.T) {
 
 	for _, test := range rftTestTable {
 		err := redisRftConn.Add(context.Background(), test.inputKey, test.inputObl)
+		time.Sleep(time.Millisecond)
 		if test.hasError {
 			assert.Error(t, err, test.name)
 		} else {
 			assert.Nil(t, err, test.name)
 		}
 	}
-	fmt.Println("TestSet Finished!")
+	fmt.Println("TestAdd Finished!")
 }

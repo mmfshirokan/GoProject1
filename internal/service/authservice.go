@@ -16,17 +16,25 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
 
+type TokenInterface interface {
+	CreateAuthToken(id int, name string, male bool) string
+	CreateRfToken(ctx context.Context, userID int) error
+	ValidateRfTokenTroughID(receivedHash string, id uuid.UUID) (bool, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error)
+}
+
 type Token struct {
 	repo      repository.AuthRepositoryInterface
-	redis     *repository.RedisRepository[[]*model.RefreshToken]
-	sourceMap *repository.MapRepository[[]*model.RefreshToken]
+	redis     repository.RedisRepositoryInterface[[]*model.RefreshToken]
+	sourceMap repository.MapRepositoryInterface[[]*model.RefreshToken]
 }
 
 func NewToken(
 	rep repository.AuthRepositoryInterface,
-	redis *repository.RedisRepository[[]*model.RefreshToken],
-	sourceMap *repository.MapRepository[[]*model.RefreshToken],
-) *Token {
+	redis repository.RedisRepositoryInterface[[]*model.RefreshToken],
+	sourceMap repository.MapRepositoryInterface[[]*model.RefreshToken],
+) TokenInterface {
 	return &Token{
 		repo:      rep,
 		redis:     redis,
@@ -60,7 +68,7 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 
 	id := uuid.New()
 
-	hashedID, err := tok.conductHashing(id)
+	hashedID, err := conductHashing(id)
 	if err != nil {
 		return fmt.Errorf("authService.conductHasing in authService.CreateRfToken: %w", err)
 	}
@@ -73,8 +81,8 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 	})
 }
 
-func (tok *Token) ValidateRfTokenTrougID(receivedHash string, id uuid.UUID) (bool, error) {
-	expectedHash, err := tok.conductHashing(id)
+func (tok *Token) ValidateRfTokenTroughID(receivedHash string, id uuid.UUID) (bool, error) {
+	expectedHash, err := conductHashing(id)
 	if err != nil {
 		return false, fmt.Errorf("authService.conductHasing in authService.ValidateRfTokenTrougID: %w", err)
 	}
@@ -82,24 +90,6 @@ func (tok *Token) ValidateRfTokenTrougID(receivedHash string, id uuid.UUID) (boo
 	res := (expectedHash == receivedHash)
 
 	return res, nil
-}
-
-func (tok *Token) conductHashing(id uuid.UUID) (string, error) {
-	h := hmac.New(sha256.New, []byte("secret"))
-
-	marsheled, err := json.Marshal(id)
-	if err != nil {
-		return "", fmt.Errorf("json.Marsha: %w", err)
-	}
-
-	str := base64.URLEncoding.EncodeToString(marsheled)
-
-	_, err = h.Write([]byte(str))
-	if err != nil {
-		return "", fmt.Errorf("json.Marsha: %w", err)
-	}
-
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(h.Sum(nil)), nil
 }
 
 func (tok *Token) Delete(ctx context.Context, id uuid.UUID) error {
@@ -123,4 +113,22 @@ func (tok *Token) GetByUserID(ctx context.Context, userID int) ([]*model.Refresh
 	}
 
 	return mod, nil
+}
+
+func conductHashing(id uuid.UUID) (string, error) {
+	h := hmac.New(sha256.New, []byte("secret"))
+
+	marsheled, err := json.Marshal(id)
+	if err != nil {
+		return "", fmt.Errorf("json.Marsha: %w", err)
+	}
+
+	str := base64.URLEncoding.EncodeToString(marsheled)
+
+	_, err = h.Write([]byte(str))
+	if err != nil {
+		return "", fmt.Errorf("json.Marsha: %w", err)
+	}
+
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(h.Sum(nil)), nil
 }

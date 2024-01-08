@@ -7,11 +7,17 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 )
 
+type PasswordInterface interface {
+	Store(ctx context.Context, usr model.User) error
+	Compare(ctx context.Context, usr model.User) (bool, error)
+	DeletePassword(ctx context.Context, id int) error
+}
+
 type Password struct {
 	rep repository.PwRepositoryInterface
 }
 
-func NewPassword(repo repository.PwRepositoryInterface) *Password {
+func NewPassword(repo repository.PwRepositoryInterface) PasswordInterface {
 	return &Password{
 		rep: repo,
 	}

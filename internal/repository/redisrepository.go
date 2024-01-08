@@ -14,6 +14,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type RedisRepositoryInterface[object *model.User | []*model.RefreshToken] interface {
+	Add(ctx context.Context, key string, obj object) error
+}
+
 type RedisRepository[object *model.User | []*model.RefreshToken] struct {
 	client *redis.Client
 	mut    sync.RWMutex
@@ -40,13 +44,13 @@ func NewCLient(conf config.Config) *redis.Client {
 	return client
 }
 
-func NewUserRedisRepository(client *redis.Client) *RedisRepository[*model.User] {
+func NewUserRedisRepository(client *redis.Client) RedisRepositoryInterface[*model.User] {
 	return &RedisRepository[*model.User]{
 		client: client,
 	}
 }
 
-func NewRftRedisRepository(client *redis.Client) *RedisRepository[[]*model.RefreshToken] {
+func NewRftRedisRepository(client *redis.Client) RedisRepositoryInterface[[]*model.RefreshToken] {
 	return &RedisRepository[[]*model.RefreshToken]{
 		client: client,
 	}

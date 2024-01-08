@@ -15,11 +15,11 @@ import (
 // UploadImage godoc
 //
 // @Summary upload image
-// @Description Uploads user image
+// @Description Uploads user image to the server
 // @Tags User ImageHandlers
 // @Accept json
 // @Param img body model.Image true "Path to image and image name"
-// @Success 1
+// @Success 200
 // @Router /users/auth/uploadImage [put]
 func (handling *Handler) UploadImage(c echo.Context) error {
 	img, err := newImage(c)

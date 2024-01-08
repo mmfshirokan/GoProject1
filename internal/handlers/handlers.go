@@ -14,12 +14,12 @@ import (
 )
 
 type Handler struct {
-	password *service.Password
-	user     *service.User
-	token    *service.Token
+	password service.PasswordInterface
+	user     service.UserInterface
+	token    service.TokenInterface
 }
 
-func NewHandler(usr *service.User, usrpw *service.Password, tok *service.Token) *Handler {
+func NewHandler(usr service.UserInterface, usrpw service.PasswordInterface, tok service.TokenInterface) *Handler {
 	return &Handler{
 		user:     usr,
 		password: usrpw,

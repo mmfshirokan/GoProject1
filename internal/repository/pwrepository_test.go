@@ -1,4 +1,4 @@
-package repository_test
+package repository
 
 import (
 	"context"
@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"github.com/mmfshirokan/GoProject1/internal/model"
-	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
-var pwConn repository.PwRepositoryInterface
+var pwConn PwRepositoryInterface
 
 func TestStore(t *testing.T) {
 	type testCase struct {

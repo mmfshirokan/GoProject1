@@ -44,7 +44,7 @@ func main() {
 	}
 
 	var (
-		repo     repository.Interface
+		repo     repository.RepositoryInterface
 		pwRepo   repository.PwRepositoryInterface
 		authRepo repository.AuthRepositoryInterface
 	)

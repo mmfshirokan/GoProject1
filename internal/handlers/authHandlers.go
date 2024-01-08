@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -17,7 +18,7 @@ import (
 // @Tags User Authentication
 // @Accept json
 // @Param usr body model.User true "User Data"
-// @Success 1
+// @Success 200
 // @Router /users/signup [post]
 func (handling *Handler) SignUp(echoContext echo.Context) error {
 	logInit()
@@ -92,11 +93,12 @@ func (handling *Handler) SignIn(echoContext echo.Context) error {
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if !validPassword {
-		log.Error(fmt.Errorf("invalid password for sign in method"))
+		err = errors.New("invalid password for sign in method")
+		log.Error(err)
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -161,7 +163,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 
 	ctx := echoContext.Request().Context()
 
-	valid, err := handling.token.ValidateRfTokenTrougID(refreshToken.Hash, refreshToken.ID)
+	valid, err := handling.token.ValidateRfTokenTroughID(refreshToken.Hash, refreshToken.ID)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 

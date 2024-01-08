@@ -15,18 +15,18 @@ import (
 
 type Consumer struct {
 	client *redis.Client
-	user   *repository.RedisRepository[*model.User]
-	token  *repository.RedisRepository[[]*model.RefreshToken]
-	usrMap *repository.MapRepository[*model.User]
-	tokMap *repository.MapRepository[[]*model.RefreshToken]
+	user   repository.RedisRepositoryInterface[*model.User]
+	token  repository.RedisRepositoryInterface[[]*model.RefreshToken]
+	usrMap repository.MapRepositoryInterface[*model.User]
+	tokMap repository.MapRepositoryInterface[[]*model.RefreshToken]
 }
 
 func NewConsumer(
 	client *redis.Client,
-	user *repository.RedisRepository[*model.User],
-	token *repository.RedisRepository[[]*model.RefreshToken],
-	usrMap *repository.MapRepository[*model.User],
-	tokMap *repository.MapRepository[[]*model.RefreshToken],
+	user repository.RedisRepositoryInterface[*model.User],
+	token repository.RedisRepositoryInterface[[]*model.RefreshToken],
+	usrMap repository.MapRepositoryInterface[*model.User],
+	tokMap repository.MapRepositoryInterface[[]*model.RefreshToken],
 ) *Consumer {
 	return &Consumer{
 		client: client,

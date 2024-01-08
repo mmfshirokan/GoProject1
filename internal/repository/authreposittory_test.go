@@ -1,4 +1,4 @@
-package repository_test
+package repository
 
 import (
 	"context"
@@ -8,14 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mmfshirokan/GoProject1/internal/model"
-	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
 const numberOfTestCases int = 4
 
 var (
-	authConn        repository.AuthRepositoryInterface
+	authConn        AuthRepositoryInterface
 	uuidsArr        [numberOfTestCases]uuid.UUID
 	refreshLifeTime time.Time
 )

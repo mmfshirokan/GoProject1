@@ -1,4 +1,4 @@
-package repository_test
+package repository
 
 import (
 	"context"
@@ -6,18 +6,17 @@ import (
 	"testing"
 
 	"github.com/mmfshirokan/GoProject1/internal/model"
-	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	mapUsrConn *repository.MapRepository[*model.User]
-	mapRftConn *repository.MapRepository[[]*model.RefreshToken]
+	mapUsrConn MapRepositoryInterface[*model.User]
+	mapRftConn MapRepositoryInterface[[]*model.RefreshToken]
 	mapUsr     map[string]*model.User
 	mapRft     map[string][]*model.RefreshToken
 )
 
-func TestMapSet(t *testing.T) {
+func TestSet(t *testing.T) {
 	type testCase[obj *model.User | []*model.RefreshToken] struct {
 		name     string
 		inputKey string
@@ -99,7 +98,7 @@ func TestMapSet(t *testing.T) {
 			t.Error("TestMapSet failed with: " + test.name)
 		}
 	}
-	fmt.Println("TestMapSet Finished!")
+	fmt.Println("TestSet Finished!")
 }
 
 func TestGet(t *testing.T) {
