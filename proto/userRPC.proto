@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+//import "/home/andreishyrakanau/projects/project1/GoProject1/proto/";
+
+option go_package = "/rpc";
+
+package userRPC;
+
+service User {
+    rpc GetTroughID(requestGetTroughID) returns (responseGetTroughID) {}
+    rpc Create(requestCreate) returns (google.protobuf.Empty) {}
+    rpc Update(requestUpdate) returns (google.protobuf.Empty) {}
+    rpc Delete(requestDelete) returns (google.protobuf.Empty) {}
+}
+
+message requestGetTroughID {
+    int64 userID = 1;
+}
+
+message responseGetTroughID {
+    userData data = 1;
+}
+
+message requestCreate {
+    userData data = 1;
+}
+
+message requestUpdate {
+    userData data = 1;
+}
+
+message requestDelete {
+    int64 userID = 1;
+}
+
+// Custom type:
+
+message userData {
+    int64 userID = 1;
+    string name = 2;
+    bool male = 3; 
+}

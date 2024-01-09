@@ -14,6 +14,7 @@ require (
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.2
 	go.mongodb.org/mongo-driver v1.12.1
+	google.golang.org/protobuf v1.32.0
 
 )
 
