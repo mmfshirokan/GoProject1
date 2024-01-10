@@ -89,7 +89,7 @@ func main() {
 	userMapConn := repository.NewUserMap(userMap)
 	rftMapConn := repository.NewRftMap(rftMap)
 
-	// service layer below:
+	go rpcServerStart(repo, pwRepo, authRepo)
 
 	usr := service.NewUser(repo, redisUsr, userMapConn)
 	pw := service.NewPassword(pwRepo)
@@ -128,9 +128,13 @@ func main() {
 	group.PUT("/uploadImage", hand.UploadImage)
 	group.PUT("/downloadImage", hand.DownloadImage)
 	echoServ.Logger.Fatal(echoServ.Start(":8081"))
+}
 
-	// rpc server layer below:
-
+func rpcServerStart(
+	repo repository.RepositoryInterface,
+	pwRepo repository.PwRepositoryInterface,
+	authRepo repository.AuthRepositoryInterface,
+) {
 	lis, err := net.Listen("tcp", "localhost:9091")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -146,5 +150,8 @@ func main() {
 	rpc.RegisterPasswordServer(grpcServer, rpsPassword)
 	rpc.RegisterTokenServer(grpcServer, rpsToken)
 
-	grpcServer.Serve(lis)
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatal("rpc fatal error")
+	}
 }
