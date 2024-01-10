@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-//import "/home/andreishyrakanau/projects/project1/GoProject1/proto/";
+import "tokenRPC.proto";
 
 option go_package = "/rpc";
 
-package userRPC;
+package rpc;
 
 service User {
     rpc GetTroughID(requestGetTroughID) returns (responseGetTroughID) {}
@@ -32,12 +32,4 @@ message requestUpdate {
 
 message requestDelete {
     int64 userID = 1;
-}
-
-// Custom type:
-
-message userData {
-    int64 userID = 1;
-    string name = 2;
-    bool male = 3; 
 }

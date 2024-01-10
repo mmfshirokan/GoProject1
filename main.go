@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	//"fmt"
-	//"os"
+	"net"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,11 +15,14 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/handlers"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
+	"github.com/mmfshirokan/GoProject1/internal/server"
 	"github.com/mmfshirokan/GoProject1/internal/service"
+	"github.com/mmfshirokan/GoProject1/proto/rpc"
 	log "github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
 )
 
 // @title Echo Serevr
@@ -87,6 +89,8 @@ func main() {
 	userMapConn := repository.NewUserMap(userMap)
 	rftMapConn := repository.NewRftMap(rftMap)
 
+	// service layer below:
+
 	usr := service.NewUser(repo, redisUsr, userMapConn)
 	pw := service.NewPassword(pwRepo)
 	tok := service.NewToken(authRepo, redisTok, rftMapConn)
@@ -124,4 +128,23 @@ func main() {
 	group.PUT("/uploadImage", hand.UploadImage)
 	group.PUT("/downloadImage", hand.DownloadImage)
 	echoServ.Logger.Fatal(echoServ.Start(":8081"))
+
+	// rpc server layer below:
+
+	lis, err := net.Listen("tcp", "localhost:9091")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+
+	rpcUser := server.NewUserServer(repo)
+	rpsPassword := server.NewPasswordServer(pwRepo)
+	rpsToken := server.NewTokenServer(authRepo)
+
+	rpc.RegisterUserServer(grpcServer, rpcUser)
+	rpc.RegisterPasswordServer(grpcServer, rpsPassword)
+	rpc.RegisterTokenServer(grpcServer, rpsToken)
+
+	grpcServer.Serve(lis)
 }

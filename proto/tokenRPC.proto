@@ -5,41 +5,22 @@ import "google/protobuf/empty.proto";
 
 option go_package = "/rpc";
 
-package tokenRPC;
+package rpc;
 
 service Token {
-    rpc CreateAuthToken(requestCreateAuthToken) returns (responseCreateAuthToken) {}
     rpc CreateRfToken(requestCreateRfToken) returns (google.protobuf.Empty) {}
-    rpc ValidateRfTokenTroughID(requestValidateRfTokenTroughID) returns (responseValidateRfTokenTroughID) {}
     rpc DeleteRftToken(requestDeleteRftToken) returns (google.protobuf.Empty) {}
     rpc GetByUserID(requestGetByUserID) returns (responseGetByUserID) {}
 }
 
 // Token request/response messages:
 
-message requestCreateAuthToken {
-    userData data = 1;
-}
-
-message responseCreateAuthToken {
-    string authToken = 1;
-}
-
 message requestCreateRfToken {
     int64 userID = 1;
 }
 
-message requestValidateRfTokenTroughID {
-    string recivedHash = 1;
-    string uuid = 2;
-}
-
-message responseValidateRfTokenTroughID {
-    bool validataionResult = 1;
-}
-
 message requestDeleteRftToken {
-    int64 userID = 1;
+    string uuid = 1;
 }
 
 message requestGetByUserID {

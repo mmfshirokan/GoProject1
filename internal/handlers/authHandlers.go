@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/mmfshirokan/GoProject1/internal/model"
+	"github.com/mmfshirokan/GoProject1/internal/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -103,7 +104,7 @@ func (handling *Handler) SignIn(echoContext echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	authToken := handling.token.CreateAuthToken(usr.ID, usr.Name, usr.Male)
+	authToken := service.CreateAuthToken(usr.ID, usr.Name, usr.Male)
 	err = handling.token.CreateRfToken(ctx, usr.ID)
 
 	if err != nil {
@@ -163,7 +164,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 
 	ctx := echoContext.Request().Context()
 
-	valid, err := handling.token.ValidateRfTokenTroughID(refreshToken.Hash, refreshToken.ID)
+	valid, err := service.ValidateRfTokenTroughID(refreshToken.Hash, refreshToken.ID)
 	if err != nil {
 		log.Error(fmt.Errorf("%w", err))
 
@@ -211,7 +212,7 @@ func (handling *Handler) Refresh(echoContext echo.Context) error {
 	}
 
 	err = echoContext.JSON(http.StatusOK, echo.Map{
-		"token":   handling.token.CreateAuthToken(refreshToken.UserID, usr.Name, usr.Male),
+		"token":   service.CreateAuthToken(refreshToken.UserID, usr.Name, usr.Male),
 		"refresh": rfTokens[0],
 	})
 	if err != nil {

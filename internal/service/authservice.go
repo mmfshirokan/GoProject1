@@ -17,9 +17,7 @@ import (
 )
 
 type TokenInterface interface {
-	CreateAuthToken(id int, name string, male bool) string
 	CreateRfToken(ctx context.Context, userID int) error
-	ValidateRfTokenTroughID(receivedHash string, id uuid.UUID) (bool, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByUserID(ctx context.Context, userID int) ([]*model.RefreshToken, error)
 }
@@ -42,33 +40,12 @@ func NewToken(
 	}
 }
 
-func (tok *Token) CreateAuthToken(id int, name string, male bool) string {
-	const authTokenLifeTime = 6
-	claims := &model.UserRequest{
-		ID:   id,
-		Name: name,
-		Male: male,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * authTokenLifeTime)),
-		},
-	}
-
-	authTok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	result, err := authTok.SignedString([]byte("secret"))
-	if err != nil {
-		return ""
-	}
-
-	return result
-}
-
 func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 	const refreshTokenLifeTime = 12
 
 	id := uuid.New()
 
-	hashedID, err := conductHashing(id)
+	hashedID, err := ConductHashing(id)
 	if err != nil {
 		return fmt.Errorf("authService.conductHasing in authService.CreateRfToken: %w", err)
 	}
@@ -79,17 +56,6 @@ func (tok *Token) CreateRfToken(ctx context.Context, userID int) error {
 		Hash:       hashedID,
 		Expiration: time.Now().Add(time.Hour * refreshTokenLifeTime),
 	})
-}
-
-func (tok *Token) ValidateRfTokenTroughID(receivedHash string, id uuid.UUID) (bool, error) {
-	expectedHash, err := conductHashing(id)
-	if err != nil {
-		return false, fmt.Errorf("authService.conductHasing in authService.ValidateRfTokenTrougID: %w", err)
-	}
-
-	res := (expectedHash == receivedHash)
-
-	return res, nil
 }
 
 func (tok *Token) Delete(ctx context.Context, id uuid.UUID) error {
@@ -115,7 +81,39 @@ func (tok *Token) GetByUserID(ctx context.Context, userID int) ([]*model.Refresh
 	return mod, nil
 }
 
-func conductHashing(id uuid.UUID) (string, error) {
+func CreateAuthToken(id int, name string, male bool) string {
+	const authTokenLifeTime = 6
+	claims := &model.UserRequest{
+		ID:   id,
+		Name: name,
+		Male: male,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * authTokenLifeTime)),
+		},
+	}
+
+	authTok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	result, err := authTok.SignedString([]byte("secret"))
+	if err != nil {
+		return ""
+	}
+
+	return result
+}
+
+func ValidateRfTokenTroughID(receivedHash string, id uuid.UUID) (bool, error) { // TODO remove this method
+	expectedHash, err := ConductHashing(id)
+	if err != nil {
+		return false, fmt.Errorf("authService.conductHasing in authService.ValidateRfTokenTrougID: %w", err)
+	}
+
+	res := (expectedHash == receivedHash)
+
+	return res, nil
+}
+
+func ConductHashing(id uuid.UUID) (string, error) {
 	h := hmac.New(sha256.New, []byte("secret"))
 
 	marsheled, err := json.Marshal(id)
