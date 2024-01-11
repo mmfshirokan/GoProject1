@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net"
 
 	"github.com/go-playground/validator/v10"
@@ -23,6 +24,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 // @title Echo Serevr
@@ -140,7 +142,7 @@ func rpcServerStart(
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(unaryServerInterceptor))
 
 	rpcUser := server.NewUserServer(repo)
 	rpsPassword := server.NewPasswordServer(pwRepo)
@@ -154,4 +156,41 @@ func rpcServerStart(
 	if err != nil {
 		log.Fatal("rpc fatal error")
 	}
+}
+
+func unaryServerInterceptor(
+	ctx context.Context,
+	req any,
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (any, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		err := errors.New("missing methadata")
+		log.Error("warning! metadata missing in main", err)
+		return nil, err
+	}
+
+	val, ok := md["authorization"]
+	if !ok || len(val) != 1 {
+		err := errors.New("missingAuth")
+		log.Error("warning! auth missing in metadata", err)
+		return nil, err
+	}
+
+	_, err := jwt.Parse(val[0], func(t *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		log.Error("jwt token parse failed in main: ", err)
+		return nil, err
+	}
+
+	m, err := handler(ctx, req)
+	if err != nil {
+		log.Error("rpc failed with error: ", err)
+		return nil, err
+	}
+
+	return m, nil
 }
