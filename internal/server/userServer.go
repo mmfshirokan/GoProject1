@@ -8,6 +8,7 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/proto/pb"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -24,7 +25,11 @@ func NewUserServer(usr repository.RepositoryInterface) pb.UserServer {
 }
 
 func (serv *UserServer) GetUser(ctx context.Context, req *pb.RequestGetUser) (*pb.ResponseGetUser, error) {
-	ctx = newMetadataContext(ctx, req.AuthToken)
+	err := setMetadataAuth(ctx, req.GetAuthToken())
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
 
 	user, err := serv.user.GetTroughID(ctx, int(req.GetUserID()))
 	if err != nil {
@@ -42,9 +47,13 @@ func (serv *UserServer) GetUser(ctx context.Context, req *pb.RequestGetUser) (*p
 }
 
 func (serv *UserServer) UpdateUser(ctx context.Context, req *pb.RequestUpdateUser) (*emptypb.Empty, error) { // NOTE mabe add option to update password
-	ctx = newMetadataContext(ctx, req.AuthToken)
+	err := setMetadataAuth(ctx, req.GetAuthToken())
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
 
-	err := serv.user.Update(ctx, model.User{
+	err = serv.user.Update(ctx, model.User{
 		//ID:   int(req.GetData().GetId()),
 		Name: req.GetData().GetName(),
 		Male: req.GetData().GetMale(),
@@ -58,9 +67,13 @@ func (serv *UserServer) UpdateUser(ctx context.Context, req *pb.RequestUpdateUse
 }
 
 func (serv *UserServer) DeleteUser(ctx context.Context, req *pb.RequestDelete) (*emptypb.Empty, error) {
-	ctx = newMetadataContext(ctx, req.GetAuthToken())
+	err := setMetadataAuth(ctx, req.GetAuthToken())
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
 
-	err := serv.user.Delete(ctx, int(req.GetUserID()))
+	err = serv.user.Delete(ctx, int(req.GetUserID()))
 	if err != nil {
 		logError(err)
 		return nil, err
@@ -89,6 +102,7 @@ func logError(err error) {
 	log.Fatal("fatal loger error; runtime can't execute Caller")
 }
 
-func newMetadataContext(ctx context.Context, auth string) context.Context {
-	return metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", auth))
+func setMetadataAuth(ctx context.Context, auth string) error {
+	header := metadata.Pairs("authorization", auth)
+	return grpc.SendHeader(ctx, header)
 }

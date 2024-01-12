@@ -162,15 +162,21 @@ func unaryServerInterceptor(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (any, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		err := errors.New("missing methadata")
-		log.Error("warning! metadata missing in main", err)
+	result, err := handler(ctx, req) //moove?
+	if err != nil {
+		log.Error("rpc failed with error: ", err)
 		return nil, err
 	}
 
-	if info.FullMethod != "/server.tokenServer/SignIn" && info.FullMethod != "/server.tokenServer/SignUp" && info.FullMethod != "/server.tokenServer/Refresh" {
-		val, ok := md["authorization"]
+	if info.FullMethod != "/pb.Token/SignUp" && info.FullMethod != "/pb.Token/SignIn" && info.FullMethod != "/pb.Token/Refresh" {
+		incomingMetadata, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			err := errors.New("missing methadata")
+			log.Error("warning! metadata missing in main", err)
+			return nil, err
+		}
+
+		val, ok := incomingMetadata["authorization"]
 		if !ok || len(val) != 1 {
 			err := errors.New("missingAuth")
 			log.Error("warning! auth missing in metadata", err)
@@ -186,11 +192,11 @@ func unaryServerInterceptor(
 		}
 	}
 
-	m, err := handler(ctx, req)
-	if err != nil {
-		log.Error("rpc failed with error: ", err)
-		return nil, err
-	}
+	// m, err := handler(ctx, req)
+	// if err != nil {
+	// 	log.Error("rpc failed with error: ", err)
+	// 	return nil, err
+	// }
 
-	return m, nil
+	return result, nil
 }
