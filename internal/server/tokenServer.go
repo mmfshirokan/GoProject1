@@ -2,44 +2,47 @@ package server
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/service"
-	"github.com/mmfshirokan/GoProject1/proto/rpc"
+	"github.com/mmfshirokan/GoProject1/proto/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type TokenServer struct {
-	token repository.AuthRepositoryInterface
-	rpc.UnimplementedTokenServer
+	user     repository.RepositoryInterface
+	password repository.PwRepositoryInterface
+	token    repository.AuthRepositoryInterface
+	pb.UnimplementedTokenServer
 }
 
-func NewTokenServer(tok repository.AuthRepositoryInterface) rpc.TokenServer {
+func NewTokenServer(usr repository.RepositoryInterface, pwd repository.PwRepositoryInterface, tok repository.AuthRepositoryInterface) pb.TokenServer {
 	return &TokenServer{
-		token: tok,
+		user:     usr,
+		password: pwd,
+		token:    tok,
 	}
 }
 
-func (serv *TokenServer) CreateRfToken(ctx context.Context, req *rpc.RequestCreateRfToken) (*emptypb.Empty, error) {
-	const refreshTokenLifeTime = 12
-
-	id := uuid.New()
-
-	hash, err := service.ConductHashing(id)
+func (serv *TokenServer) SignUp(ctx context.Context, req *pb.RequestSignUp) (*emptypb.Empty, error) {
+	err := serv.user.Create(ctx, model.User{
+		ID:   int(req.GetData().GetId()),
+		Name: req.GetData().GetName(),
+		Male: req.GetData().GetMale(),
+	})
 	if err != nil {
 		logError(err)
 		return nil, err
 	}
 
-	err = serv.token.Create(ctx, &model.RefreshToken{
-		UserID:     int(req.GetUserID()),
-		ID:         id,
-		Hash:       hash,
-		Expiration: time.Now().Add(time.Hour * refreshTokenLifeTime),
+	err = serv.password.Store(ctx, model.User{
+		ID:       int(req.GetData().GetId()),
+		Password: req.GetPassword(),
 	})
 	if err != nil {
 		logError(err)
@@ -49,35 +52,138 @@ func (serv *TokenServer) CreateRfToken(ctx context.Context, req *rpc.RequestCrea
 	return &emptypb.Empty{}, nil
 }
 
-func (serv *TokenServer) DeleteRftToken(ctx context.Context, req *rpc.RequestDeleteRftToken) (*emptypb.Empty, error) {
-	id, err := uuid.Parse(req.GetUuid())
+func (serv *TokenServer) SignIn(ctx context.Context, req *pb.RequestSignIn) (*pb.ResponseSignIn, error) {
+	valid, err := serv.password.Compare(ctx, model.User{
+		ID:       int(req.GetUserID()),
+		Password: req.GetPassword(),
+	})
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+	if !valid {
+		err = errors.New("wrong password!")
+		logError(err)
+		return nil, err
+	}
+
+	user, err := serv.user.GetTroughID(ctx, int(req.GetUserID()))
 	if err != nil {
 		logError(err)
 		return nil, err
 	}
 
-	serv.token.Delete(ctx, id)
-	return &emptypb.Empty{}, nil
+	authToken := service.CreateAuthToken(
+		user.ID,
+		user.Name,
+		user.Male,
+	)
+
+	refreshToken, err := newRFT(user.ID)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	err = serv.token.Create(ctx, refreshToken)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	return &pb.ResponseSignIn{
+		Tokens: &pb.Jwt{
+			AuthToken: authToken,
+			Rft: &pb.RefreshToken{
+				UserID:     int64(refreshToken.UserID),
+				Uuid:       refreshToken.ID.String(),
+				Hash:       refreshToken.Hash,
+				Experation: timestamppb.New(refreshToken.Expiration),
+			},
+		},
+	}, nil
 }
 
-func (serv *TokenServer) GetByUserID(ctx context.Context, req *rpc.RequestGetByUserID) (*rpc.ResponseGetByUserID, error) { // TODO add redis
-	rfTokens, err := serv.token.GetByUserID(ctx, int(req.GetUserID()))
+func (serv *TokenServer) Refresh(ctx context.Context, req *pb.RequestRefresh) (*pb.ResponseRefresh, error) {
+	id, err := uuid.Parse(req.GetRft().GetUuid())
+	userID := int(req.GetRft().GetUserID())
 	if err != nil {
 		logError(err)
 		return nil, err
 	}
 
-	var result []*rpc.ResponseGetByUserIDRefreshToken
-	for i := range rfTokens {
-		result[i] = &rpc.ResponseGetByUserIDRefreshToken{
-			UserId:     int64(rfTokens[i].UserID),
-			Uuid:       rfTokens[i].ID.String(),
-			Hash:       rfTokens[i].Hash,
-			Expiration: timestamppb.New(rfTokens[i].Expiration),
-		}
+	valid, err := service.ValidateRfTokenTroughID(req.GetRft().GetHash(), id)
+	if err != nil {
+		logError(err)
+		return nil, err
 	}
 
-	return &rpc.ResponseGetByUserID{
-		Rft: result,
+	if !valid {
+		err = errors.New("invalid rft")
+		logError(err)
+		return nil, err
+	}
+
+	err = serv.token.Delete(ctx, id)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	user, err := serv.user.GetTroughID(ctx, userID)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	authToken := service.CreateAuthToken(userID, user.Name, user.Male)
+
+	refreshToken, err := newRFT(userID)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	err = serv.token.Create(ctx, refreshToken)
+	if err != nil {
+		logError(err)
+		return nil, err
+	}
+
+	return &pb.ResponseRefresh{
+		Tokens: &pb.Jwt{
+			AuthToken: authToken,
+			Rft: &pb.RefreshToken{
+				UserID:     int64(refreshToken.UserID),
+				Uuid:       refreshToken.ID.String(),
+				Hash:       refreshToken.Hash,
+				Experation: timestamppb.New(refreshToken.Expiration),
+			},
+		},
+	}, nil
+}
+
+// type TokenServer interface {
+//     SignUp(context.Context, *RequestSignUp) (*emptypb.Empty, error)
+//     SignIn(context.Context, *RequestSignIn) (*ResponseSignIn, error)
+//     Refresh(context.Context, *RequestRefresh) (*ResponseRefresh, error)
+//     mustEmbedUnimplementedTokenServer()
+// }
+
+// suplemental function
+func newRFT(userID int) (*model.RefreshToken, error) {
+	const refreshTokenLifeTime = 12
+
+	id := uuid.New()
+	hashedID, err := service.ConductHashing(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.RefreshToken{
+		UserID:     userID,
+		ID:         id,
+		Hash:       hashedID,
+		Expiration: time.Now().Add(time.Hour * refreshTokenLifeTime),
 	}, nil
 }

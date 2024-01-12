@@ -3,39 +3,36 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "/rpc";
+option go_package = "/pb";
 
-package rpc;
+package pb;
 
 service Token {
-    rpc CreateRfToken(requestCreateRfToken) returns (google.protobuf.Empty) {}
-    rpc DeleteRftToken(requestDeleteRftToken) returns (google.protobuf.Empty) {}
-    rpc GetByUserID(requestGetByUserID) returns (responseGetByUserID) {}
+    rpc SignUp(requestSignUp) returns (google.protobuf.Empty) {}
+    rpc SignIn(requestSignIn) returns (responseSignIn) {}
+    rpc Refresh(requestRefresh) returns (responseRefresh) {}
 }
 
-// Token request/response messages:
+message requestSignUp {
+    userData data = 1;
+    string password = 2;
+}
 
-message requestCreateRfToken {
+message requestSignIn {
     int64 userID = 1;
+    string password = 2;
 }
 
-message requestDeleteRftToken {
-    string uuid = 1;
+message responseSignIn {
+    jwt tokens = 1;
 }
 
-message requestGetByUserID {
-    int64 userID = 1; 
-}
+message requestRefresh {
+    refreshToken rft = 1;
+} 
 
-message responseGetByUserID {
-    message refreshToken {
-        int64 userId = 1;
-        string uuid = 2; 
-        string hash = 3; 
-        google.protobuf.Timestamp expiration = 4; 
-    }
-
-    repeated refreshToken rft = 1;
+message responseRefresh {
+    jwt tokens = 1;
 }
 
 // Custom message types:
@@ -44,4 +41,21 @@ message userData { // 1
     int64 id = 1;
     string name = 2;
     bool male = 3;
+}
+
+message passwordData {
+    int64 userID = 1;
+    string password = 2;
+}
+
+message jwt {
+    string authToken = 1;
+    refreshToken rft = 2;
+}
+
+message refreshToken {
+    int64 userID = 1;
+    string uuid = 2;
+    string hash = 3;
+    google.protobuf.Timestamp experation = 4; 
 }

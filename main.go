@@ -18,7 +18,7 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/server"
 	"github.com/mmfshirokan/GoProject1/internal/service"
-	"github.com/mmfshirokan/GoProject1/proto/rpc"
+	"github.com/mmfshirokan/GoProject1/proto/pb"
 	log "github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -145,12 +145,10 @@ func rpcServerStart(
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(unaryServerInterceptor))
 
 	rpcUser := server.NewUserServer(repo)
-	rpsPassword := server.NewPasswordServer(pwRepo)
-	rpsToken := server.NewTokenServer(authRepo)
+	rpsToken := server.NewTokenServer(repo, pwRepo, authRepo)
 
-	rpc.RegisterUserServer(grpcServer, rpcUser)
-	rpc.RegisterPasswordServer(grpcServer, rpsPassword)
-	rpc.RegisterTokenServer(grpcServer, rpsToken)
+	pb.RegisterUserServer(grpcServer, rpcUser)
+	pb.RegisterTokenServer(grpcServer, rpsToken)
 
 	err = grpcServer.Serve(lis)
 	if err != nil {
@@ -171,19 +169,21 @@ func unaryServerInterceptor(
 		return nil, err
 	}
 
-	val, ok := md["authorization"]
-	if !ok || len(val) != 1 {
-		err := errors.New("missingAuth")
-		log.Error("warning! auth missing in metadata", err)
-		return nil, err
-	}
+	if info.FullMethod != "/server.tokenServer/SignIn" && info.FullMethod != "/server.tokenServer/SignUp" && info.FullMethod != "/server.tokenServer/Refresh" {
+		val, ok := md["authorization"]
+		if !ok || len(val) != 1 {
+			err := errors.New("missingAuth")
+			log.Error("warning! auth missing in metadata", err)
+			return nil, err
+		}
 
-	_, err := jwt.Parse(val[0], func(t *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
-	if err != nil {
-		log.Error("jwt token parse failed in main: ", err)
-		return nil, err
+		_, err := jwt.Parse(val[0], func(t *jwt.Token) (interface{}, error) {
+			return []byte("secret"), nil
+		})
+		if err != nil {
+			log.Error("jwt token parse failed in main: ", err)
+			return nil, err
+		}
 	}
 
 	m, err := handler(ctx, req)

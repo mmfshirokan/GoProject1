@@ -3,33 +3,31 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "tokenRPC.proto";
 
-option go_package = "/rpc";
+option go_package = "/pb";
 
-package rpc;
+package pb;
 
 service User {
-    rpc GetTroughID(requestGetTroughID) returns (responseGetTroughID) {}
-    rpc Create(requestCreate) returns (google.protobuf.Empty) {}
-    rpc Update(requestUpdate) returns (google.protobuf.Empty) {}
-    rpc Delete(requestDelete) returns (google.protobuf.Empty) {}
+    rpc GetUser(requestGetUser) returns (responseGetUser) {}
+    rpc UpdateUser(requestUpdateUser) returns (google.protobuf.Empty) {}
+    rpc DeleteUser(requestDelete) returns (google.protobuf.Empty) {}
 }
 
-message requestGetTroughID {
-    int64 userID = 1;
+message requestGetUser {
+    string authToken = 1;
+    int64 userID = 2;
 }
 
-message responseGetTroughID {
+message responseGetUser {
     userData data = 1;
 }
 
-message requestCreate {
-    userData data = 1;
-}
-
-message requestUpdate {
-    userData data = 1;
+message requestUpdateUser {
+    string authToken = 1;
+    userData data = 2;  
 }
 
 message requestDelete {
-    int64 userID = 1;
+    string authToken = 1;
+    int64 userID = 2;
 }
