@@ -59,7 +59,7 @@ func (handling *Handler) UploadImage(c echo.Context) error {
 // @Tags User ImageHandlers
 // @Accept json
 // @Param img body model.Image true "Path where to download image and image name"
-// @Success 1
+// @Success 200
 // @Router /users/auth/downloadImage [put]
 func (handling *Handler) DownloadImage(c echo.Context) error {
 	img, err := newImage(c)

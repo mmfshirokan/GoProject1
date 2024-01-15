@@ -27,7 +27,7 @@ type RequestGetUser struct {
 	unknownFields protoimpl.UnknownFields
 
 	AuthToken string `protobuf:"bytes,1,opt,name=authToken,proto3" json:"authToken,omitempty"`
-	UserID    int64  `protobuf:"varint,2,opt,name=userID,proto3" json:"userID,omitempty"`
+	UserID    int64  `protobuf:"varint,2,opt,name=userID,proto3" json:"userID,omitempty"` // TODO remove? jwt.Parse can provide nesseasary data
 }
 
 func (x *RequestGetUser) Reset() {
@@ -184,7 +184,7 @@ type RequestDelete struct {
 	unknownFields protoimpl.UnknownFields
 
 	AuthToken string `protobuf:"bytes,1,opt,name=authToken,proto3" json:"authToken,omitempty"`
-	UserID    int64  `protobuf:"varint,2,opt,name=userID,proto3" json:"userID,omitempty"`
+	UserID    int64  `protobuf:"varint,2,opt,name=userID,proto3" json:"userID,omitempty"` // TODO remove? jwt.Parse can provide nesseasary data
 }
 
 func (x *RequestDelete) Reset() {

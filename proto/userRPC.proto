@@ -15,7 +15,7 @@ service User {
 
 message requestGetUser {
     string authToken = 1;
-    int64 userID = 2;
+    int64 userID = 2; // TODO remove? jwt.Parse can provide nesseasary data 
 }
 
 message responseGetUser {
@@ -24,10 +24,10 @@ message responseGetUser {
 
 message requestUpdateUser {
     string authToken = 1;
-    userData data = 2;  
+    userData data = 2;
 }
 
 message requestDelete {
     string authToken = 1;
-    int64 userID = 2;
+    int64 userID = 2; // TODO remove? jwt.Parse can provide nesseasary data 
 }

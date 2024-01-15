@@ -162,7 +162,7 @@ func unaryServerInterceptor(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (any, error) {
-	result, err := handler(ctx, req) //moove?
+	result, err := handler(ctx, req)
 	if err != nil {
 		log.Error("rpc failed with error: ", err)
 		return nil, err
@@ -191,12 +191,6 @@ func unaryServerInterceptor(
 			return nil, err
 		}
 	}
-
-	// m, err := handler(ctx, req)
-	// if err != nil {
-	// 	log.Error("rpc failed with error: ", err)
-	// 	return nil, err
-	// }
 
 	return result, nil
 }
