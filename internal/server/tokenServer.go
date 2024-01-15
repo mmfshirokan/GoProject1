@@ -62,7 +62,7 @@ func (serv *TokenServer) SignIn(ctx context.Context, req *pb.RequestSignIn) (*pb
 		return nil, err
 	}
 	if !valid {
-		err = errors.New("wrong password!")
+		err = errors.New("wrong password!\n")
 		logError(err)
 		return nil, err
 	}

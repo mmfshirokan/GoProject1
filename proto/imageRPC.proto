@@ -24,8 +24,8 @@ message responseDownloadImage {
 
 message requestUploadImage {
     optional string authToken = 1;
-    int64 userID = 2; 
-    string imageName = 3;
+    optional int64 userID = 2; 
+    optional string imageName = 3;
     bytes imagePiece = 4;
     bool streamIsFinished = 5;
 }
