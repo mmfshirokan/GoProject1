@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ImageClient interface {
-	DownloadImage(ctx context.Context, opts ...grpc.CallOption) (Image_DownloadImageClient, error)
+	DownloadImage(ctx context.Context, in *RequestDownloadImage, opts ...grpc.CallOption) (Image_DownloadImageClient, error)
 	UploadImage(ctx context.Context, opts ...grpc.CallOption) (Image_UploadImageClient, error)
 }
 
@@ -34,27 +35,28 @@ func NewImageClient(cc grpc.ClientConnInterface) ImageClient {
 	return &imageClient{cc}
 }
 
-func (c *imageClient) DownloadImage(ctx context.Context, opts ...grpc.CallOption) (Image_DownloadImageClient, error) {
+func (c *imageClient) DownloadImage(ctx context.Context, in *RequestDownloadImage, opts ...grpc.CallOption) (Image_DownloadImageClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Image_ServiceDesc.Streams[0], "/pb.Image/DownloadImage", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &imageDownloadImageClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 type Image_DownloadImageClient interface {
-	Send(*RequestDownloadImage) error
 	Recv() (*ResponseDownloadImage, error)
 	grpc.ClientStream
 }
 
 type imageDownloadImageClient struct {
 	grpc.ClientStream
-}
-
-func (x *imageDownloadImageClient) Send(m *RequestDownloadImage) error {
-	return x.ClientStream.SendMsg(m)
 }
 
 func (x *imageDownloadImageClient) Recv() (*ResponseDownloadImage, error) {
@@ -76,7 +78,7 @@ func (c *imageClient) UploadImage(ctx context.Context, opts ...grpc.CallOption) 
 
 type Image_UploadImageClient interface {
 	Send(*RequestUploadImage) error
-	Recv() (*ResponseUploadImage, error)
+	CloseAndRecv() (*emptypb.Empty, error)
 	grpc.ClientStream
 }
 
@@ -88,8 +90,11 @@ func (x *imageUploadImageClient) Send(m *RequestUploadImage) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *imageUploadImageClient) Recv() (*ResponseUploadImage, error) {
-	m := new(ResponseUploadImage)
+func (x *imageUploadImageClient) CloseAndRecv() (*emptypb.Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(emptypb.Empty)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -100,7 +105,7 @@ func (x *imageUploadImageClient) Recv() (*ResponseUploadImage, error) {
 // All implementations must embed UnimplementedImageServer
 // for forward compatibility
 type ImageServer interface {
-	DownloadImage(Image_DownloadImageServer) error
+	DownloadImage(*RequestDownloadImage, Image_DownloadImageServer) error
 	UploadImage(Image_UploadImageServer) error
 	mustEmbedUnimplementedImageServer()
 }
@@ -109,7 +114,7 @@ type ImageServer interface {
 type UnimplementedImageServer struct {
 }
 
-func (UnimplementedImageServer) DownloadImage(Image_DownloadImageServer) error {
+func (UnimplementedImageServer) DownloadImage(*RequestDownloadImage, Image_DownloadImageServer) error {
 	return status.Errorf(codes.Unimplemented, "method DownloadImage not implemented")
 }
 func (UnimplementedImageServer) UploadImage(Image_UploadImageServer) error {
@@ -129,12 +134,15 @@ func RegisterImageServer(s grpc.ServiceRegistrar, srv ImageServer) {
 }
 
 func _Image_DownloadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImageServer).DownloadImage(&imageDownloadImageServer{stream})
+	m := new(RequestDownloadImage)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ImageServer).DownloadImage(m, &imageDownloadImageServer{stream})
 }
 
 type Image_DownloadImageServer interface {
 	Send(*ResponseDownloadImage) error
-	Recv() (*RequestDownloadImage, error)
 	grpc.ServerStream
 }
 
@@ -146,20 +154,12 @@ func (x *imageDownloadImageServer) Send(m *ResponseDownloadImage) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *imageDownloadImageServer) Recv() (*RequestDownloadImage, error) {
-	m := new(RequestDownloadImage)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 func _Image_UploadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(ImageServer).UploadImage(&imageUploadImageServer{stream})
 }
 
 type Image_UploadImageServer interface {
-	Send(*ResponseUploadImage) error
+	SendAndClose(*emptypb.Empty) error
 	Recv() (*RequestUploadImage, error)
 	grpc.ServerStream
 }
@@ -168,7 +168,7 @@ type imageUploadImageServer struct {
 	grpc.ServerStream
 }
 
-func (x *imageUploadImageServer) Send(m *ResponseUploadImage) error {
+func (x *imageUploadImageServer) SendAndClose(m *emptypb.Empty) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -192,12 +192,10 @@ var Image_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "DownloadImage",
 			Handler:       _Image_DownloadImage_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 		{
 			StreamName:    "UploadImage",
 			Handler:       _Image_UploadImage_Handler,
-			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

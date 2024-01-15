@@ -1,19 +1,20 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto"; 
+
 option go_package = "/pb";
 
 package pb;
 
 service Image {
-    rpc DownloadImage(stream requestDownloadImage) returns (stream responseDownloadImage) {} 
-    rpc UploadImage(stream requestUploadImage) returns (stream responseUploadImage) {}
+    rpc DownloadImage(requestDownloadImage) returns (stream responseDownloadImage) {} 
+    rpc UploadImage(stream requestUploadImage) returns (google.protobuf.Empty) {}
 }
 
 message requestDownloadImage {
-    optional string authToken = 1;
-    optional int64 userID = 2; 
-    optional string imageName = 3;
-    string response = 4;
+    string authToken = 1;
+    int64 userID = 2; 
+    string imageName = 3;
 }
 
 message responseDownloadImage {
@@ -25,8 +26,4 @@ message requestUploadImage {
     optional int64 userID = 2; 
     optional string imageName = 3;
     bytes imagePiece = 4;
-}
-
-message responseUploadImage {
-    string response = 1;
 }

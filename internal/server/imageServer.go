@@ -21,13 +21,9 @@ func NewImageServer() pb.ImageServer {
 	return &ImageServer{}
 }
 
-func (serv *ImageServer) DownloadImage(stream pb.Image_DownloadImageServer) error {
-	req, err := stream.Recv()
-	if err != nil {
-		log.Fatal(err)
-	}
+func (serv *ImageServer) DownloadImage(req *pb.RequestDownloadImage, stream pb.Image_DownloadImageServer) error {
 
-	err = stream.SetHeader(metadata.Pairs(
+	err := stream.SetHeader(metadata.Pairs(
 		"authorization", req.GetAuthToken(),
 	))
 	if err != nil {
@@ -54,16 +50,6 @@ func (serv *ImageServer) DownloadImage(stream pb.Image_DownloadImageServer) erro
 		stream.Send(&pb.ResponseDownloadImage{
 			ImagePiece: imgPiece,
 		})
-
-		for {
-			req, err = stream.Recv()
-			if err != nil {
-				log.Fatal(err)
-			}
-			if req.GetResponse() == "ok" {
-				break
-			}
-		}
 	}
 }
 
@@ -73,10 +59,6 @@ func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
 		logError(err)
 		return err
 	}
-
-	stream.Send(&pb.ResponseUploadImage{
-		Response: "ok",
-	})
 
 	id := req.GetUserID()
 	imgName := req.GetImageName()
@@ -94,19 +76,11 @@ func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
 	for {
 		req, err = stream.Recv()
 		if err == io.EOF {
-			stream.Send(&pb.ResponseUploadImage{
-				Response: "ok",
-			})
-
 			break
 		}
 		if err != nil {
 			log.Fatal("recv error att uploadImage:", err)
 		}
-
-		stream.Send(&pb.ResponseUploadImage{
-			Response: "ok",
-		})
 
 		imgFull = append(imgFull, req.GetImagePiece()...)
 	}
