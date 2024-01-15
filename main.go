@@ -146,9 +146,11 @@ func rpcServerStart(
 
 	rpcUser := server.NewUserServer(repo)
 	rpsToken := server.NewTokenServer(repo, pwRepo, authRepo)
+	rpsImage := server.NewImageServer()
 
 	pb.RegisterUserServer(grpcServer, rpcUser)
 	pb.RegisterTokenServer(grpcServer, rpsToken)
+	pb.RegisterImageServer(grpcServer, rpsImage)
 
 	err = grpcServer.Serve(lis)
 	if err != nil {
