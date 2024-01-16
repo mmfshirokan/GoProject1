@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"net"
 
 	"github.com/go-playground/validator/v10"
@@ -24,7 +23,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // @title Echo Serevr
@@ -164,29 +162,29 @@ func unaryServerInterceptor(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (any, error) {
-	if info.FullMethod != "/pb.Token/SignUp" && info.FullMethod != "/pb.Token/SignIn" && info.FullMethod != "/pb.Token/Refresh" {
-		incomingMetadata, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			err := errors.New("missing methadata")
-			log.Error("warning! metadata missing in main", err)
-			return nil, err
-		}
+	// if info.FullMethod != "/pb.Token/SignUp" && info.FullMethod != "/pb.Token/SignIn" && info.FullMethod != "/pb.Token/Refresh" {
+	// 	incomingMetadata, ok := metadata.FromIncomingContext(ctx)
+	// 	if !ok {
+	// 		err := errors.New("missing methadata")
+	// 		log.Error("warning! metadata missing in main", err)
+	// 		return nil, err
+	// 	}
 
-		val, ok := incomingMetadata["authorization"]
-		if !ok || len(val) != 1 {
-			err := errors.New("missingAuth")
-			log.Error("warning! auth missing in metadata", err)
-			return nil, err
-		}
+	// 	val, ok := incomingMetadata["authorization"]
+	// 	if !ok || len(val) != 1 {
+	// 		err := errors.New("missingAuth")
+	// 		log.Error("warning! auth missing in metadata", err)
+	// 		return nil, err
+	// 	}
 
-		_, err := jwt.Parse(val[0], func(t *jwt.Token) (interface{}, error) {
-			return []byte("secret"), nil
-		})
-		if err != nil {
-			log.Error("jwt token parse failed in main: ", err)
-			return nil, err
-		}
-	}
+	// 	_, err := jwt.Parse(val[0], func(t *jwt.Token) (interface{}, error) {
+	// 		return []byte("secret"), nil
+	// 	})
+	// 	if err != nil {
+	// 		log.Error("jwt token parse failed in main: ", err)
+	// 		return nil, err
+	// 	}
+	// }
 
 	result, err := handler(ctx, req)
 	if err != nil {

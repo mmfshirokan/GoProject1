@@ -23,21 +23,22 @@ func NewImageServer() pb.ImageServer {
 func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
 	req, err := stream.Recv()
 	if err != nil {
-		log.Fatal(err)
+		logError(err)
 	}
 
 	id := req.UserID
 	imgName := req.ImageName
 
-	imgFull := make([]byte, 4200)
+	imgFull := make([]byte, 0)
 
 	for {
 		req, err = stream.Recv()
+
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			log.Fatal("recv error att uploadImage:", err)
+			logError(err)
 		}
 
 		imgFull = append(imgFull, req.ImagePiece...)
@@ -78,7 +79,7 @@ func (serv *ImageServer) DownloadImage(req *pb.RequestDownloadImage, stream pb.I
 		_, err := imgReader.Read(imgPiece)
 		if err == io.EOF {
 			log.Info("Download finished")
-			return err
+			return nil //err
 		}
 		if err != nil {
 			log.Fatal(err)
