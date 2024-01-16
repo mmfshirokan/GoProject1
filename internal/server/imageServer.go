@@ -21,60 +21,24 @@ func NewImageServer() pb.ImageServer {
 	return &ImageServer{}
 }
 
-func (serv *ImageServer) DownloadImage(req *pb.RequestDownloadImage, stream pb.Image_DownloadImageServer) error {
+func (serv *ImageServer) UploadImage(req *pb.RequestUploadImage, stream pb.Image_UploadImageServer) error {
+
+	id := req.GetUserID()
+	imgName := req.GetImageName()
 
 	err := stream.SetHeader(metadata.Pairs(
 		"authorization", req.GetAuthToken(),
 	))
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	imgFull, err := os.ReadFile(ImgNameWrap(req.GetUserID(), req.GetImageName()))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	imgPiece := make([]byte, 128)
-	imgReader := bytes.NewReader(imgFull)
-
-	for {
-		_, err := imgReader.Read(imgPiece)
-		if err == io.EOF {
-			return err
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		stream.Send(&pb.ResponseDownloadImage{
-			ImagePiece: imgPiece,
-		})
-	}
-}
-
-func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
-	req, err := stream.Recv()
-	if err != nil {
 		logError(err)
 		return err
 	}
 
-	id := req.GetUserID()
-	imgName := req.GetImageName()
-
-	err = stream.SetHeader(metadata.Pairs(
-		"authorization", req.GetAuthToken(),
-	))
-	if err != nil {
-		logError(err)
-		return err
-	}
-
-	imgFull := make([]byte, 11000)
+	imgFull := make([]byte, 4200)
+	imgPiece := &pb.ResponseUploadImage{}
 
 	for {
-		req, err = stream.Recv()
+		err = stream.RecvMsg(imgPiece)
 		if err == io.EOF {
 			break
 		}
@@ -82,7 +46,7 @@ func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
 			log.Fatal("recv error att uploadImage:", err)
 		}
 
-		imgFull = append(imgFull, req.GetImagePiece()...)
+		imgFull = append(imgFull, imgPiece.ImagePiece...)
 	}
 
 	img, _, err := image.Decode(bytes.NewBuffer(imgFull))
@@ -103,7 +67,41 @@ func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
 		return err
 	}
 
+	log.Info("Upload finished")
 	return nil
+}
+
+func (serv *ImageServer) DownloadImage(req *pb.RequestDownloadImage, stream pb.Image_DownloadImageServer) error {
+
+	err := stream.SetHeader(metadata.Pairs(
+		"authorization", req.GetAuthToken(),
+	))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	imgFull, err := os.ReadFile(ImgNameWrap(req.GetUserID(), req.GetImageName()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	imgPiece := make([]byte, 128)
+	imgReader := bytes.NewReader(imgFull)
+
+	for {
+		_, err := imgReader.Read(imgPiece)
+		if err == io.EOF {
+			log.Info("Download finished")
+			return err
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		stream.Send(&pb.ResponseDownloadImage{
+			ImagePiece: imgPiece,
+		})
+	}
 }
 
 func ImgNameWrap(id int64, name string) string {
