@@ -164,12 +164,6 @@ func unaryServerInterceptor(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (any, error) {
-	result, err := handler(ctx, req)
-	if err != nil {
-		log.Error("rpc failed with error: ", err)
-		return nil, err
-	}
-
 	if info.FullMethod != "/pb.Token/SignUp" && info.FullMethod != "/pb.Token/SignIn" && info.FullMethod != "/pb.Token/Refresh" {
 		incomingMetadata, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -192,6 +186,12 @@ func unaryServerInterceptor(
 			log.Error("jwt token parse failed in main: ", err)
 			return nil, err
 		}
+	}
+
+	result, err := handler(ctx, req)
+	if err != nil {
+		log.Error("rpc failed with error: ", err)
+		return nil, err
 	}
 
 	return result, nil

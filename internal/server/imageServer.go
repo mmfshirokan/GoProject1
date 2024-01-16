@@ -10,7 +10,6 @@ import (
 
 	"github.com/mmfshirokan/GoProject1/proto/pb"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc/metadata"
 )
 
 type ImageServer struct {
@@ -21,24 +20,19 @@ func NewImageServer() pb.ImageServer {
 	return &ImageServer{}
 }
 
-func (serv *ImageServer) UploadImage(req *pb.RequestUploadImage, stream pb.Image_UploadImageServer) error {
-
-	id := req.GetUserID()
-	imgName := req.GetImageName()
-
-	err := stream.SetHeader(metadata.Pairs(
-		"authorization", req.GetAuthToken(),
-	))
+func (serv *ImageServer) UploadImage(stream pb.Image_UploadImageServer) error {
+	req, err := stream.Recv()
 	if err != nil {
-		logError(err)
-		return err
+		log.Fatal(err)
 	}
 
+	id := req.UserID
+	imgName := req.ImageName
+
 	imgFull := make([]byte, 4200)
-	imgPiece := &pb.ResponseUploadImage{}
 
 	for {
-		err = stream.RecvMsg(imgPiece)
+		req, err = stream.Recv()
 		if err == io.EOF {
 			break
 		}
@@ -46,7 +40,7 @@ func (serv *ImageServer) UploadImage(req *pb.RequestUploadImage, stream pb.Image
 			log.Fatal("recv error att uploadImage:", err)
 		}
 
-		imgFull = append(imgFull, imgPiece.ImagePiece...)
+		imgFull = append(imgFull, req.ImagePiece...)
 	}
 
 	img, _, err := image.Decode(bytes.NewBuffer(imgFull))
@@ -55,7 +49,7 @@ func (serv *ImageServer) UploadImage(req *pb.RequestUploadImage, stream pb.Image
 		return err
 	}
 
-	destFile, err := os.Create(ImgNameWrap(id, imgName))
+	destFile, err := os.Create(ImgNameWrap(*id, *imgName))
 	if err != nil {
 		logError(err)
 		return err
@@ -72,14 +66,6 @@ func (serv *ImageServer) UploadImage(req *pb.RequestUploadImage, stream pb.Image
 }
 
 func (serv *ImageServer) DownloadImage(req *pb.RequestDownloadImage, stream pb.Image_DownloadImageServer) error {
-
-	err := stream.SetHeader(metadata.Pairs(
-		"authorization", req.GetAuthToken(),
-	))
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	imgFull, err := os.ReadFile(ImgNameWrap(req.GetUserID(), req.GetImageName()))
 	if err != nil {
 		log.Fatal(err)
