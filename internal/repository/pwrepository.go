@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mmfshirokan/GoProject1/internal/model"
 	log "github.com/sirupsen/logrus"
@@ -17,6 +19,7 @@ type PwRepositoryInterface interface {
 	Store(ctx context.Context, usr model.User) error
 	Compare(ctx context.Context, usr model.User) (bool, error)
 	DeletePassword(ctx context.Context, id int) error
+	BulkStore(ctx context.Context, pwd [][]interface{}) error
 }
 
 func NewPostgresPasswordRepository(dbpool *pgxpool.Pool) PwRepositoryInterface {
@@ -85,6 +88,11 @@ func (rep *repositoryMongo) DeletePassword(ctx context.Context, id int) error {
 	return nil
 }
 
+func (rep *repositoryMongo) BulkStore(ctx context.Context, pwd [][]interface{}) error {
+	err := errors.New("Not implemented exeption")
+	return err
+}
+
 func (rep *repositoryPostgres) Store(ctx context.Context, usr model.User) error {
 	logInit()
 
@@ -140,6 +148,16 @@ func (rep *repositoryPostgres) DeletePassword(ctx context.Context, id int) error
 		return fmt.Errorf("exec in repository.DeletePassword%w", err)
 	}
 
+	return nil
+}
+
+// Only for Kafka:
+func (rep *repositoryPostgres) BulkStore(ctx context.Context, pwd [][]interface{}) error {
+	_, err := rep.dbpool.CopyFrom(ctx, pgx.Identifier{"apps", "passwords"}, []string{"id", "password"}, pgx.CopyFromRows(pwd))
+	log.Info("Bulk Store")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

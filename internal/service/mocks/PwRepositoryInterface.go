@@ -22,6 +22,53 @@ func (_m *PwRepositoryInterface) EXPECT() *PwRepositoryInterface_Expecter {
 	return &PwRepositoryInterface_Expecter{mock: &_m.Mock}
 }
 
+// BulkStore provides a mock function with given fields: ctx, pwd
+func (_m *PwRepositoryInterface) BulkStore(ctx context.Context, pwd [][]interface{}) error {
+	ret := _m.Called(ctx, pwd)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkStore")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, [][]interface{}) error); ok {
+		r0 = rf(ctx, pwd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// PwRepositoryInterface_BulkStore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkStore'
+type PwRepositoryInterface_BulkStore_Call struct {
+	*mock.Call
+}
+
+// BulkStore is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pwd [][]interface{}
+func (_e *PwRepositoryInterface_Expecter) BulkStore(ctx interface{}, pwd interface{}) *PwRepositoryInterface_BulkStore_Call {
+	return &PwRepositoryInterface_BulkStore_Call{Call: _e.mock.On("BulkStore", ctx, pwd)}
+}
+
+func (_c *PwRepositoryInterface_BulkStore_Call) Run(run func(ctx context.Context, pwd [][]interface{})) *PwRepositoryInterface_BulkStore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([][]interface{}))
+	})
+	return _c
+}
+
+func (_c *PwRepositoryInterface_BulkStore_Call) Return(_a0 error) *PwRepositoryInterface_BulkStore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *PwRepositoryInterface_BulkStore_Call) RunAndReturn(run func(context.Context, [][]interface{}) error) *PwRepositoryInterface_BulkStore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Compare provides a mock function with given fields: ctx, usr
 func (_m *PwRepositoryInterface) Compare(ctx context.Context, usr model.User) (bool, error) {
 	ret := _m.Called(ctx, usr)

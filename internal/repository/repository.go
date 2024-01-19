@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-//go:generate mockery --dir . --all --output ../service/mocks --case --outpkg service_test --with-expecter
+//go:generate mockery --dir . --all --output ../service/mocks --with-expecter
 
 type RepositoryInterface interface {
 	GetTroughID(ctx context.Context, id int) (*model.User, error)
