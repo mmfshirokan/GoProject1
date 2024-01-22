@@ -10,6 +10,7 @@ services:
       - mongonet
       - postgres
       - kafka-network
+      - rabbitmq-network
 
   postgres:
     container_name: "postgres_container"
@@ -99,10 +100,20 @@ services:
     networks:
       - kafka-network
 
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:latest
+    restart: unless-stopped
+    ports:
+      - 5672:5672
+    networks:
+      - rabbitmq-network 
+
 networks:
   postgres:
   mongonet:
   kafka-network:
+  rabbitmq-network:
 volumes:
   echodb_data:
   pgadmin_data:

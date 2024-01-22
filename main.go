@@ -16,6 +16,7 @@ import (
 	"github.com/mmfshirokan/GoProject1/internal/handlers"
 	kafkaserver "github.com/mmfshirokan/GoProject1/internal/kafkaServer"
 	"github.com/mmfshirokan/GoProject1/internal/model"
+	rabbitmqserver "github.com/mmfshirokan/GoProject1/internal/rabbitMqServer"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/mmfshirokan/GoProject1/internal/server"
 	"github.com/mmfshirokan/GoProject1/internal/service"
@@ -94,10 +95,11 @@ func main() {
 
 	go rpcServerStart(repo, pwRepo, authRepo)
 
-	// kafka layer:
 	kafkaServer := kafkaserver.NewKafkaServer(pwRepo)
 	go kafkaServer.Read(ctx, "localhost:9092", "data")
-	// end of kafka layer
+
+	rabbitmqserver := rabbitmqserver.NewRabbitMqServer(pwRepo)
+	go rabbitmqserver.Read(ctx, "amqp://guest:guest@localhost:5672/", []string{"data0", "data1", "data2"})
 
 	usr := service.NewUser(repo, redisUsr, userMapConn)
 	pw := service.NewPassword(pwRepo)

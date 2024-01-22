@@ -2,12 +2,10 @@ package kafkaserver
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"strconv"
 	"sync"
 
-	"github.com/labstack/gommon/log"
 	"github.com/mmfshirokan/GoProject1/internal/repository"
 	"github.com/segmentio/kafka-go"
 )
@@ -41,24 +39,24 @@ func (pwd *KafkaUser) Read(ctx context.Context, broker string, topic string) {
 
 			numOfRows := 0
 			resArr := make([][]interface{}, 100)
-			gorutineNum := reader.Config().Partition
+			//gorutineNum := reader.Config().Partition
 
-			log.Info("Sucssesful start ", gorutineNum)
+			//log.Info("Sucssesful start ", gorutineNum)
 
 			for {
 				msg, err := reader.ReadMessage(ctx)
 				if err == io.EOF {
-					log.Info(fmt.Sprintf("exiting kafka read gorutine-%d", gorutineNum))
+					//log.Info(fmt.Sprintf("exiting kafka read gorutine-%d", gorutineNum))
 					break
 				}
 				if err != nil {
-					log.Error(fmt.Sprintf("error occured in gorutine-%d: %v", gorutineNum, err))
+					//log.Error(fmt.Sprintf("error occured in gorutine-%d: %v", gorutineNum, err))
 					break
 				}
 
 				id, err := strconv.ParseInt(string(msg.Key), 10, 64)
 				if err != nil {
-					log.Error(fmt.Sprintf("error occured in gorutine-%d: %v", gorutineNum, err))
+					//log.Error(fmt.Sprintf("error occured in gorutine-%d: %v", gorutineNum, err))
 					continue
 				}
 
@@ -71,7 +69,7 @@ func (pwd *KafkaUser) Read(ctx context.Context, broker string, topic string) {
 					pwd.mut.Unlock()
 
 					if err != nil {
-						log.Error(fmt.Printf("error occured in gorutine-%d: %v", gorutineNum, err))
+						//log.Error(fmt.Printf("error occured in gorutine-%d: %v", gorutineNum, err))
 					}
 					numOfRows = 0
 				}
